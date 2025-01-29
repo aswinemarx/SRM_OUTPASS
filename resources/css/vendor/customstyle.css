@@ -1,0 +1,70 @@
+/*          For demo purpose         */
+
+
+.fixed-plugin{
+    position: fixed;
+    top: 50%;
+    right: -2%;
+    z-index: 1031;
+}
+
+.fixed-plugin .btn{
+    margin: 0px 0px 0;
+    /* color: #FFFFFF; */
+     transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+	transition: all 0.8s ease 0s;
+    -webkit-transition: all 0.8s ease 0s;
+    -moz-transition: all 0.8s ease 0s;
+    -ms-transition: all 0.8s ease 0s;
+    -o-transition: all 0.8s ease 0s;
+    width: auto;
+}
+.fixed-plugin .btn:hover{
+    /* color: #FFFFFF; */
+}
+
+
+@media (max-width:768px){
+    .fixed-plugin{
+        top: 50%;
+        right: -4%;
+    }
+    .main .container{
+        margin-bottom: 50px;
+    }
+}
+
+@media (min-width: 768px){
+    
+    .btn-wd {
+        min-width: 140px;
+    }
+}
+
+
+
+.fixed-plugin ul > li:last-child a{
+    margin-bottom: 15px;
+}
+
+
+
+.requiredfield{
+    color: #f44336;
+    display: inline-block;
+    font-size: 90%;
+    line-height: 0!important;
+    margin: 0!important;
+}
+
+.pull-right {
+    float: right!important;
+}
+
+.pull-left {
+    float: left!important;
+}

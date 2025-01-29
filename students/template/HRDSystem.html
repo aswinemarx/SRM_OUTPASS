@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8"> 
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>SRM Student Portal</title>
+        <link href="../../resources/css/vendor/mainstyle.css" rel="stylesheet">
+        <link href="../../resources/css/vendor/all.css" rel="stylesheet" type="text/css">
+        <link href="../../resources/css/vendor/customstyle.css" rel="stylesheet">
+        <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
+        <script src="../../resources/js/vendor/jquery.min.js"></script>
+        <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+        <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
+        <script src="../../resources/js/vendor/main.js"></script>
+        <script>
+            var appURL = "";
+            var imageName;
+            var d;
+            $(function () {
+                (function (global) {
+
+                    if (typeof (global) === "undefined")
+                    {
+                        throw new Error("window is undefined");
+                    }
+
+                    var _hash = "!";
+                    var noBackPlease = function () {
+                        global.location.href += "#";
+                        // making sure we have the fruit available for juice....
+                        // 50 milliseconds for just once do not cost much (^__^)
+                        global.setTimeout(function () {
+                            global.location.href += "!";
+                        }, 50);
+                    };
+
+                    global.onhashchange = function () {
+                        if (global.location.hash !== _hash) {
+                            global.location.hash = _hash;
+                        }
+                    };
+
+                    global.onload = function () {
+                        noBackPlease();
+
+                        // disables backspace on page except on input fields and textarea..
+                        document.body.onkeydown = function (e) {
+                            var elm = e.target.nodeName.toLowerCase();
+                            if (e.which === 8 && (elm !== 'input' && elm !== 'textarea')) {
+                                e.preventDefault();
+                            }
+                            // stopping event bubbling up the DOM tree..
+                            e.stopPropagation();
+                        };
+                    };
+                })(window);
+            });
+
+            function updateDateTime() {
+                var now = new Date();
+                var options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                var formattedDateTime = now.toLocaleDateString('en-US', options);
+                document.getElementById('currentDateTime').innerHTML = formattedDateTime;
+            }
+
+            setInterval(updateDateTime, 1000);
+        </script>
+    </head>
+
+    <body class="nav-fixed">
+        <form id="userHomePage" name="userHomePage" method="post">
+            <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
+                <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+                <a class="navbar-brand" href="../../students/loginManager/UserHomePage.jsp">
+                    <img src="../../resources/Image/srmist.png"  alt="SRM Logo"/> 
+                    <br><font style="font-size: 9pt;">Student Portal</font>
+                </a>
+                <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
+
+                <ul class="navbar-nav align-items-center ml-auto text-center">
+
+                    <a style='cursor:pointer;'>
+                        <span class="dropdown-item" data-toggle="modal"  data-target="#logoutModal">
+                            <div class="dropdown-item-icon"><i class="fas fa-sign-out-alt"></i></div>
+                            Logout
+                        </span>
+                    </a>
+                </ul>
+            </nav>
+
+            <div id="layoutSidenav">
+                <div id="layoutSidenav_nav">
+                    <nav class="sidenav shadow-right sidenav-light">
+                        <div class="sidenav-menu">
+                            <div class="nav accordion" id="accordionSidenav">
+
+                                <!-- Sidenav Heading -->
+                                <!--                                <div class="sidenav-menu-heading">Menus</div>-->
+
+                                <!-- Individual Menu Start -->
+                                <a class="nav-link" href="dashboard.html">
+                                    <div class="nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                    Dashboard
+                                </a>
+                                <!-- Individual Menu End -->
+
+                                <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
+                                    <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                        <!-- Sidenav Footer-->
+                        <div class="sidenav-footer">
+                            <div class="sidenav-footer-content">
+                                <div class="sidenav-footer-subtitle">RA2311003020239</div>
+                                <div class="sidenav-footer-subtitle">ASWIN ANAND E</div>
+                                <div class="sidenav-footer-title" id="currentDateTime">Fri 24-Jan-2025 14:47:11</div>
+                            </div>
+                            <input type="hidden" style="color:white;" id="hidchkHostelOpen" name="hidchkHostelOpen" size="10" value="''">
+                        </div>
+                    </nav>
+                </div>
+                <div id="layoutSidenav_content">
+                    <main>
+                        <div class="container-fluid">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">  
+                                    <div class="card border-custom mb-2 mt-1"> 
+                                        <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Student Profile</div>
+                                        <div class="card-body py-1"> 
+                                            <table class="table table-borderless mb-0">
+                                                <tbody>  
+                                                    <tr class="border-bottom">
+                                                        <td style="width: 30%">
+                                                            Student Name 
+                                                        </td>
+                                                        <td>
+                                                            <div class="font-weight-bold font-weight-700 text-custom">ASWIN ANAND E</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="border-bottom">
+                                                        <td>
+                                                            Student ID
+                                                        </td>
+                                                        <td>
+                                                            <div class="font-weight-bold font-weight-700 text-custom">590964</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="border-bottom">
+                                                        <td>
+                                                            Register No. 
+                                                        </td>
+                                                        <td>
+                                                            <div class="font-weight-bold font-weight-700 text-custom">RA2311003020239</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="border-bottom">
+                                                        <td>
+                                                            Email ID
+                                                        </td>
+                                                        <td>
+                                                            <div class="font-weight-bold font-weight-700 text-custom">ae4704@srmist.edu.in</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="border-bottom">
+                                                        <td>
+                                                            Institution
+                                                        </td>
+                                                        <td>
+                                                            <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="border-bottom">
+                                                        <td>
+                                                            Program
+                                                        </td>
+                                                        <td>
+                                                            <div class="font-weight-bold">B.Tech.-Computer Science and Engineering[UG - FT - ACADEMIC]</div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-custom mb-4">
+                                        <div class="card-body text-center">
+                                            <div id="divImage">
+                                                <img class="img-account-profile mb-2 imgPhoto" src="../../resources/sphotos/736771cc38e5b448c8b53c1cccf01f48.jpg?rn=9872" alt="Student Photo">
+                                            </div> 
+                                            <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div> 
+                                            <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
+                                        </div>
+                                    </div>  
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                    <footer class="footer mt-auto footer-light">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-6 small"></div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+
+            <input type="hidden" id="hdnFormStatus" name="hdnFormStatus" value="0">
+            <input type="hidden" id="hdnFormId" name="hdnFormId" value="1">
+            <input type="hidden" id="hdnFormDetails" name="hdnFormDetails" value="1">
+            <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
+            <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM"/>
+        </form>
+
+        <!-- Scroll to Top Button-->
+        <a class="scroll-to-top rounded" href="#page-top">
+            <i class="fas fa-angle-up"></i>
+        </a>
+
+        <!-- Logout Modal-->
+        <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                            <span class="text-white" aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure to logout?
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
+                        <a class="btn btn-custom lift" href="../../students/template/Logout.jsp">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+        <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
+        <script src="../../resources/js/vendor/main.js"></script>                   
+    </body>
+</html>
