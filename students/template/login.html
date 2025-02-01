@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRM Student Portal</title>
+    <link rel="stylesheet" href="../../resources/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../resources/css/custom.css">
+    <link rel="stylesheet" href="../../resources/css/jquery-ui.css">
+    <link rel="stylesheet" href="../../resources/css/vendor/all.css">
+    <link rel="stylesheet" href="../../resources/css/vendor/mainstyle.css">
+    <link href='../../resources/Image/college_icon.png' type='Image/x-icon' rel='icon'>
+    <script src="../../resources/js/vendor/jquery.min.js"></script>
+    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+    <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
+    <script src="../../resources/js/vendor/main.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Outer Row -->
+        <div class="row justify-content-center">
+            <div class="col-xl-12 col-lg-12 col-md-12">
+                <div class="card o-hidden shadow-lg my-1 border-0">
+                    <div class="row mb-1">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-6 text-center">
+                            <img class="mt-1" src="../../resources/Image/srmist.jpg" width="275px;" height="90px;" alt="SRM IST"/>
+                        </div>
+                        <div class="col-md-3"></div>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Nested Row within Card Body -->
+                        <div class="row mt-3 ml-1 mr-1">
+                            <div class="col-md-7">
+                                <p style="font-weight: bold;font-size: 13pt;">Dear Student,</p>
+                                <p>Welcome to SRMIST STUDENT PORTAL.</p>
+                                <p>You can access student portal to know your academic and financial details etc.</p>
+                                <p>SRMIST students can login with NetID credentials. (i.e If your mail id is abcd@srmist.edu.in, your netid is abcd & password will be e-mail password)</p>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card card-progress" id="divLogin">
+                                    <div class="card-header badge-custom text-center text-white">Student Portal</div>
+                                    <div class="card-body">
+                                        <div class="p-2">
+                                            <form method="post" autocomplete="off" id="login_form" class="needs-validation" novalidate>
+                                                <div class="form-group mb-4">
+                                                    <label>NetID (without '@srmist.edu.in')</label>
+                                                    <div class="input-group has-validation">
+                                                        <span class="input-group-text text-custom" id="inputGroupPrepend"><i class="fa fa-user "></i></span>
+                                                        <input type="text" class="form-control clsalphanumeric" name="login" id="login" placeholder="NetID" required maxlength="6">
+                                                        <div class="invalid-feedback" id='divUserId'>
+                                                            Enter an User Id
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group mb-4">
+                                                    <label>Password</label>
+                                                    <div class="input-group has-validation">
+                                                        <span class="input-group-text text-custom" id="inputGroupPrepend"><i class="fa fa-key "></i></span>
+                                                        <input type="password" class="form-control" name="passwd" id="passwd" placeholder="Password" required>
+                                                        <div class="invalid-feedback" id='divPassword'>
+                                                            Enter a Password
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Captcha</label>
+                                                </div>
+                                                <div class="form-group row">
+                                                    <div class="col-sm-6 input-group has-validation">
+                                                        <span class="input-group-text text-custom" id="inputGroupPrepend"><i class="fa fa-recycle"></i></span>
+                                                        <input type="text" class="form-control" name="ccode" id="ccode" placeholder="Captcha" required>
+                                                        <div class="invalid-feedback">
+                                                            Enter valid Captcha
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-4 input-group has-validation">
+                                                        <img src="/srmiststudentportal/captchas" alt="Captcha Image">
+                                                    </div>
+                                                    <div class="col-sm-2 input-group has-validation">
+                                                        <button tabindex="-1" class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="btnRefresh" onclick="funChangeCaptchas()"><i class="fa fa-recycle"></i></button>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <a href="#" data-toggle="modal" data-target="#modalForgetPassword">Forgot Password?</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalForgetPassword" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Forgot Password</h5>
+                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Please enter your email address to reset your password.
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+                        <button class="btn btn-primary" type="button" id="btnResetPassword">Reset Password</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalForgetPasswordConfirm" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">User Credentials Confirm!</h5>
+                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                            <span class="text-white" aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="modalbodyForgetPassword">
+                        Wish to get your user credentials?
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-dark lift" type="button" data-dismiss="modal">Close</button>
+                        <button class="btn btn-custom lift" type="button" id="btnConfirm" onclick="funConfirmForget()">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var d = new Date();
+        var n = d.getFullYear();
+
+        $(document).ready(function () {
+            $(window).keydown(function (event) {
+                if (event.keyCode == 13) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        });
+
+        $(function () {
+            $('#login').val("");
+            $('#passwd').val("");
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState(null, "", window.location.href);
+            };
+
+            $(".clsalphanumeric").keypress(function (event) {
+                var regex = new RegExp("^[a-zA-Z0-9]+$");
+                var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+                if (!regex.test(key)) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
