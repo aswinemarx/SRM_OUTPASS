@@ -23,9 +23,7 @@
     -o-transition: all 0.8s ease 0s;
     width: auto;
 }
-.fixed-plugin .btn:hover{
-    /* color: #FFFFFF; */
-}
+/* Removed empty ruleset for .fixed-plugin .btn:hover */
 
 
 @media (max-width:768px){
@@ -67,4 +65,53 @@
 
 .pull-left {
     float: left!important;
+}
+
+/* Add custom styles for radio buttons */
+.custom-radio-group {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Adjust the gap between radio buttons as needed */
+    margin-bottom: 10px; /* Add some space between the two lines */
+}
+
+.custom-radio {
+    display: flex;
+    align-items: center;
+}
+
+.custom-radio input[type="radio"] {
+    display: none;
+}
+
+.custom-radio label {
+    position: relative;
+    padding-left: 25px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-radio label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: 2px solid #007bff;
+    border-radius: 50%;
+    background-color: #fff;
+}
+
+.custom-radio input[type="radio"]:checked + label::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #007bff;
 }

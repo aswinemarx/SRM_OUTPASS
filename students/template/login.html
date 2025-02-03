@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SRM Student Portal</title>
     <link rel="stylesheet" href="../../resources/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../../resources/css/custom.css">
+    <link rel="stylesheet" href="custom.css">
     <link rel="stylesheet" href="../../resources/css/jquery-ui.css">
-    <link rel="stylesheet" href="../../resources/css/vendor/all.css">
-    <link rel="stylesheet" href="../../resources/css/vendor/mainstyle.css">
+    <link rel="stylesheet" href="all.css">
+    <link rel="stylesheet" href="mainstyle.css">
     <link href='../../resources/Image/college_icon.png' type='Image/x-icon' rel='icon'>
     <script src="../../resources/js/vendor/jquery.min.js"></script>
     <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
@@ -42,12 +42,13 @@
                                     <div class="card-header badge-custom text-center text-white">Student Portal</div>
                                     <div class="card-body">
                                         <div class="p-2">
-                                            <form method="post" autocomplete="off" id="login_form" class="needs-validation" novalidate>
+                                            <!-- Form for Login -->
+                                            <form method="post" action="login.php" autocomplete="off" id="login_form" class="needs-validation" novalidate>
                                                 <div class="form-group mb-4">
                                                     <label>NetID (without '@srmist.edu.in')</label>
                                                     <div class="input-group has-validation">
                                                         <span class="input-group-text text-custom" id="inputGroupPrepend"><i class="fa fa-user "></i></span>
-                                                        <input type="text" class="form-control clsalphanumeric" name="login" id="login" placeholder="NetID" required maxlength="6">
+                                                        <input type="text" class="form-control clsalphanumeric" name="login" id="login" placeholder="NetID" required maxlength="25">
                                                         <div class="invalid-feedback" id='divUserId'>
                                                             Enter an User Id
                                                         </div>
@@ -64,22 +65,13 @@
                                                     </div>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label>Captcha</label>
-                                                </div>
-                                                <div class="form-group row">
-                                                    <div class="col-sm-6 input-group has-validation">
-                                                        <span class="input-group-text text-custom" id="inputGroupPrepend"><i class="fa fa-recycle"></i></span>
-                                                        <input type="text" class="form-control" name="ccode" id="ccode" placeholder="Captcha" required>
-                                                        <div class="invalid-feedback">
-                                                            Enter valid Captcha
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-4 input-group has-validation">
-                                                        <img src="/srmiststudentportal/captchas" alt="Captcha Image">
-                                                    </div>
-                                                    <div class="col-sm-2 input-group has-validation">
-                                                        <button tabindex="-1" class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="btnRefresh" onclick="funChangeCaptchas()"><i class="fa fa-recycle"></i></button>
-                                                    </div>
+                                                    <label>User Type</label>
+                                                    <select name="userType" id="userType" class="form-control" required>
+                                                        <option value="student">Student</option>
+                                                        <option value="fa">Faculty</option>
+                                                        <option value="hod">HOD</option>
+                                                        <option value="warden">Warden</option>
+                                                    </select>
                                                 </div>
                                                 <div class="form-group">
                                                     <button type="submit" class="btn btn-primary btn-block">Login</button>
@@ -98,6 +90,7 @@
             </div>
         </div>
 
+        <!-- Forget Password Modal -->
         <div class="modal fade" id="modalForgetPassword" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -119,6 +112,7 @@
             </div>
         </div>
 
+        <!-- Confirmation Modal -->
         <div class="modal fade" id="modalForgetPasswordConfirm" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -162,7 +156,7 @@
             };
 
             $(".clsalphanumeric").keypress(function (event) {
-                var regex = new RegExp("^[a-zA-Z0-9]+$");
+                var regex = new RegExp("^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\|,.<>\\/?]+$");
                 var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
                 if (!regex.test(key)) {
                     event.preventDefault();

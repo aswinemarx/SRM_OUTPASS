@@ -300,6 +300,7 @@ button,
 [type=reset],
 [type=submit] {
   -webkit-appearance: button;
+  appearance: button;
 }
 
 button:not(:disabled),
@@ -359,6 +360,7 @@ progress {
 [type=search] {
   outline-offset: -2px;
   -webkit-appearance: none;
+  appearance: none;
 }
 
 [type=search]::-webkit-search-decoration {
@@ -5833,7 +5835,8 @@ input[type=button].btn-block {
   min-height: 1.5rem;
   padding-left: 1.5rem;
   -webkit-print-color-adjust: exact;
-          color-adjust: exact;
+  print-color-adjust: exact;
+          print-color-adjust: exact;
 }
 
 .custom-control-inline {
@@ -17019,6 +17022,7 @@ body {
 
 .no-highlight {
   -webkit-user-select: none;
+  user-select: none;
   -moz-user-select: none;
   -khtml-user-select: none;
   -ms-user-select: none;
@@ -18811,7 +18815,7 @@ body {
   color: #a7aeb8;
 }
 .sidenav-light .sidenav-menu .nav-link:hover {
-  color: #337ab7; //#00cfd5
+  color: #337ab7; /* #00cfd5 */
 }
 .sidenav-light .sidenav-menu .nav-link.active {
   color: #337ab7;
@@ -20473,7 +20477,7 @@ pre[class*=language-] {
 a.bg-custom:hover, a.bg-custom:focus,
 button.bg-custom:hover,
 button.bg-custom:focus {
-  background-color: #fffff !important;
+  background-color: #ffffff !important;
 }
 
 
@@ -20482,7 +20486,7 @@ button.bg-custom:focus {
 }
 
 a.text-custom:hover, a.text-custom:focus {
-  color: #fffff !important;
+  color: #ffffff !important;
 }
 .border-custom {
   border-color: #337ab7 !important;
@@ -20495,8 +20499,8 @@ a.text-custom:hover, a.text-custom:focus {
 }
 .btn-custom:hover {
   color: #fff;
-  background-color:#337ab7; //#0052cc;
-  border-color: #337ab7;//#004dbf;
+  background-color: #337ab7;
+  border-color: #337ab7; /* #004dbf; */
 }
 .btn-custom:focus, .btn-custom.focus {
   color: #fff;
