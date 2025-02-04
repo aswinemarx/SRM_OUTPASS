@@ -1,265 +1,348 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
 <html lang="en">
 
-    <head>
-        <meta charset="utf-8"> 
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>SRM Hostel Portal</title>
-        <link href="mainstyle.css" rel="stylesheet">
-        <link href="all.css" rel="stylesheet" type="text/css">
-        <link href="customstyle.css" rel="stylesheet">
-        <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
-        <script src="../../resources/js/vendor/jquery.min.js"></script>
-        <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
-        <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
-        <script src="../../resources/js/vendor/main.js"></script>
-        <script>
-            var appURL = "";
-            var imageName;
-            var d;
-            $(function () {
-                (function (global) {
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>SRM Hostel Portal</title>
+    <link href="mainstyle.css" rel="stylesheet">
+    <link href="all.css" rel="stylesheet" type="text/css">
+    <link href="customstyle.css" rel="stylesheet">
+    <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
+    <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
+    <script src="jquery.min.js"></script>
+    <script src="bootstrap.bundle.min.js"></script>
+    <script src="jquery.easing.min.js"></script>
+    <script src="main.js"></script>
+    <script>
+        function updateDateTime() {
+            var now = new Date();
+            var options = {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            var formattedDateTime = now.toLocaleDateString('en-GB', options).replace(',', '');
+            document.getElementById('currentDateTime').textContent = formattedDateTime;
+        }
 
-                    if (typeof (global) === "undefined")
-                    {
-                        throw new Error("window is undefined");
-                    }
-
-                    var _hash = "!";
-                    var noBackPlease = function () {
-                        global.location.href += "#";
-                        // making sure we have the fruit available for juice....
-                        // 50 milliseconds for just once do not cost much (^__^)
-                        global.setTimeout(function () {
-                            global.location.href += "!";
-                        }, 50);
-                    };
-
-                    global.onhashchange = function () {
-                        if (global.location.hash !== _hash) {
-                            global.location.hash = _hash;
-                        }
-                    };
-
-                    global.onload = function () {
-                        noBackPlease();
-
-                        // disables backspace on page except on input fields and textarea..
-                        document.body.onkeydown = function (e) {
-                            var elm = e.target.nodeName.toLowerCase();
-                            if (e.which === 8 && (elm !== 'input' && elm !== 'textarea')) {
-                                e.preventDefault();
-                            }
-                            // stopping event bubbling up the DOM tree..
-                            e.stopPropagation();
-                        };
-                    };
-                })(window);
+        setInterval(updateDateTime, 1000);
+        window.onload = updateDateTime;
+    </script>
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: 'fetch_student_data.php',
+                method: 'GET',
+                success: function (data) {
+                    var student = JSON.parse(data);
+                    $('#studentName').text(student.name);
+                    $('#registerNo').text(student.register_no);
+                    $('#emailId').text(student.email);
+                }
             });
 
-            function updateDateTime() {
-                var now = new Date();
-                var options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-                var formattedDateTime = now.toLocaleDateString('en-US', options);
-                document.getElementById('currentDateTime').innerHTML = formattedDateTime;
+            // Set max date for "From Date" to 2 days from today
+            var today = new Date();
+            var maxDate = new Date();
+            maxDate.setDate(today.getDate() + 2);
+            var maxDateString = maxDate.toISOString().split('T')[0];
+            document.getElementById('fromDate').setAttribute('max', maxDateString);
+        });
+
+        function validateOutpassForm() {
+            var fromDate = new Date(document.getElementById('fromDate').value + 'T' + document.getElementById('fromTime').value);
+            var toDate = new Date(document.getElementById('toDate').value + 'T' + document.getElementById('toTime').value);
+            var now = new Date();
+
+            if (fromDate <= now) {
+                alert('Date and Time (Out) must be greater than the current date and time.');
+                return false;
             }
 
-            setInterval(updateDateTime, 1000);
-        </script>
-        <script>
-            $(document).ready(function() {
-                $.ajax({
-                    url: 'fetch_student_data.php',
-                    method: 'GET',
-                    success: function(data) {
-                        var student = JSON.parse(data);
-                        $('#studentName').text(student.name);
-                        $('#registerNo').text(student.register_no);
-                        $('#emailId').text(student.email);
-                    }
-                });
-            });
-        </script>
-    </head>
+            if (toDate <= fromDate) {
+                alert('Date and Time (In) must be greater than Date and Time (Out).');
+                return false;
+            }
 
-    <body class="nav-fixed">
-        <form id="userHomePage" name="userHomePage" method="post">
-            <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
-                <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle"><i class="fa fa-bars"></i></button>
-                <a class="navbar-brand" href="../../students/loginManager/UserHomePage.jsp">
-                    <img src="../../resources/Image/srmist.png"  alt="SRM Logo"/> 
-                    <br><font style="font-size: 9pt;">Student Portal</font>
+            return true;
+        }
+
+        function checkOutpassStatus() {
+    $.ajax({
+        url: "fetch_outpass_status.php",
+        method: 'GET',
+        success: function (data) {
+            console.log(data); // Log the raw response
+            var outpass = JSON.parse(data);
+            
+            if (outpass.error) {
+                $('#outpassStatus').show();
+                $('#outpassStatusText').text(outpass.error);
+                $('#outpassForm').hide();
+            } else {
+                var now = new Date();
+                var dateIn = new Date(outpass.date_in + 'T' + outpass.time_in);  // Combine date and time
+                
+                if (outpass.status === 'Rejected' || (outpass.status === 'Approved' && dateIn < now)) {
+                    $('#outpassForm').show();
+                    $('#outpassStatus').hide();
+                } else if (outpass.status === 'Approved') {
+                    $('#outpassForm').hide();
+                    $('#outpassStatus').show();
+                    $('#outpassStatusText').text('Outpass Status: Approved');
+                } else if (outpass.status === 'Pending') {
+                    $('#outpassForm').hide();
+                    $('#outpassStatus').show();
+                    $('#outpassStatusText').text('Outpass Status: Pending');
+                } else {
+                    $('#outpassForm').hide();
+                    $('#outpassStatus').show();
+                    $('#outpassStatusText').text('Outpass Status: ' + outpass.status);
+                }
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("Error fetching outpass status:", error);
+        }
+    });
+}
+
+
+    </script>
+</head>
+
+<body class="nav-fixed" onload="updateDateTime()">
+    <form id="userHomePage" name="userHomePage" method="post">
+        <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
+            <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+            <a class="navbar-brand" href="../../students/loginManager/UserHomePage.jsp">
+                <img src="../../resources/Image/srmist.png" alt="SRM Logo" />
+                <br><font style="font-size: 9pt;">Student Portal</font>
+            </a>
+            <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
+
+            <ul class="navbar-nav align-items-center ml-auto text-center">
+                <a style='cursor:pointer;'>
+                    <span class="dropdown-item" data-toggle="modal" data-target="#logoutModal">
+                        <div class="dropdown-item-icon"><i class="fas fa-sign-out-alt"></i></div>
+                        Logout
+                    </span>
                 </a>
-                <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
+            </ul>
+        </nav>
 
-                <ul class="navbar-nav align-items-center ml-auto text-center">
+        <div id="layoutSidenav">
+            <div id="layoutSidenav_nav">
+                <nav class="sidenav shadow-right sidenav-light">
+                    <div class="sidenav-menu">
+                        <div class="nav accordion" id="accordionSidenav">
+                            <!-- Sidenav Heading -->
+                            <!-- <div class="sidenav-menu-heading">Menus</div> -->
 
-                    <a style='cursor:pointer;'>
-                        <span class="dropdown-item" data-toggle="modal"  data-target="#logoutModal">
-                            <div class="dropdown-item-icon"><i class="fas fa-sign-out-alt"></i></div>
-                            Logout
-                        </span>
-                    </a>
-                </ul>
-            </nav>
+                            <!-- Individual Menu Start -->
+                            <a class="nav-link" href="dashboard.html">
+                                <div class="nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                Dashboard
+                            </a>
+                            <!-- Individual Menu End -->
 
-            <div id="layoutSidenav">
-                <div id="layoutSidenav_nav">
-                    <nav class="sidenav shadow-right sidenav-light">
-                        <div class="sidenav-menu">
-                            <div class="nav accordion" id="accordionSidenav">
+                            <!-- Outpass Menu Start -->
+                            <a class="nav-link" href="#" data-toggle="modal" data-target="#outpassModal" onclick="checkOutpassStatus()">
+                                <div class="nav-link-icon"><i class="fas fa-file-alt"></i></div>
+                                Outpass
+                            </a>
+                            <!-- Outpass Menu End -->
 
-                                <!-- Sidenav Heading -->
-                                <!--                                <div class="sidenav-menu-heading">Menus</div>-->
-
-                                <!-- Individual Menu Start -->
-                                <a class="nav-link" href="dashboard.html">
-                                    <div class="nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                                    Dashboard
-                                </a>
-                                <!-- Individual Menu End -->
-
-                                <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
-                                    <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
-                                    Logout
-                                </a>
-                            </div>
+                            <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
+                                <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
+                                Logout
+                            </a>
                         </div>
-                        <!-- Sidenav Footer-->
-                        <div class="sidenav-footer">
-                            <div class="sidenav-footer-content">
-                                <div class="sidenav-footer-subtitle"></div>
-                                <div class="sidenav-footer-subtitle"></div>
-                                <div class="sidenav-footer-title" id="currentDateTime">Fri 24-Jan-2025 14:47:11</div>
-                            </div>
-                            <input type="hidden" style="color:white;" id="hidchkHostelOpen" name="hidchkHostelOpen" size="10" value="''">
+                    </div>
+                    <!-- Sidenav Footer-->
+                    <div class="sidenav-footer">
+                        <div class="sidenav-footer-content">
+                            <div class="sidenav-footer-subtitle"></div>
+                            <div class="sidenav-footer-subtitle"></div>
+                            <div class="sidenav-footer-title" id="currentDateTime"></div>
                         </div>
-                    </nav>
-                </div>
-                <div id="layoutSidenav_content">
-                    <main>
-                        <div class="container-fluid">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">  
-                                    <div class="card border-custom mb-2 mt-1"> 
-                                        <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Student Profile</div>
-                                        <div class="card-body py-1"> 
-                                            <table class="table table-borderless mb-0">
-                                                <tbody>  
-                                                    <tr class="border-bottom">
-                                                        <td style="width: 30%">
-                                                            Student Name 
-                                                        </td>
-                                                        <td>
-                                                            <div class="font-weight-bold font-weight-700 text-custom" id="studentName"></div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="border-bottom">
-                                                        <td>
-                                                            Student ID
-                                                        </td>
-                                                        <td>
-                                                            <div class="font-weight-bold font-weight-700 text-custom">590964</div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="border-bottom">
-                                                        <td>
-                                                            Register No. 
-                                                        </td>
-                                                        <td>
-                                                            <div class="font-weight-bold font-weight-700 text-custom" id="registerNo"></div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="border-bottom">
-                                                        <td>
-                                                            Email ID
-                                                        </td>
-                                                        <td>
-                                                            <div class="font-weight-bold font-weight-700 text-custom" id="emailId"></div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="border-bottom">
-                                                        <td>
-                                                            Institution
-                                                        </td>
-                                                        <td>
-                                                            <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="border-bottom">
-                                                        <td>
-                                                            Program
-                                                        </td>
-                                                        <td>
-                                                            <div class="font-weight-bold">B.Tech.-Computer Science and Engineering[UG - FT - ACADEMIC]</div>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
+                        <input type="hidden" style="color:white;" id="hidchkHostelOpen" name="hidchkHostelOpen" size="10" value="''">
+                    </div>
+                </nav>
+            </div>
+            <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="card border-custom mb-2 mt-1">
+                                    <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Student Profile</div>
+                                    <div class="card-body py-1">
+                                        <table class="table table-borderless mb-0">
+                                            <tbody>
+                                                <tr class="border-bottom">
+                                                    <td style="width: 30%">
+                                                        Student Name
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="studentName"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Student ID
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom">590964</div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Register No.
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="registerNo"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Email ID
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="emailId"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Institution
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Program
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold">B.Tech.-Computer Science and Engineering[UG - FT - ACADEMIC]</div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card border-custom mb-4">
-                                        <div class="card-body text-center">
-                                            <div id="divImage">
-                                                <img class="img-account-profile mb-2 imgPhoto" src="death note.jpg" alt="Student Photo" style="height: 150px;width:150px;">
-                                            </div> 
-                                            <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div> 
-                                            <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-custom mb-4">
+                                    <div class="card-body text-center">
+                                        <div id="divImage">
+                                            <img class="img-account-profile mb-2 imgPhoto" src="death note.jpg" alt="Student Photo" style="height: 150px;width:150px;">
                                         </div>
-                                    </div>  
+                                        <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div>
+                                        <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </main>
-                    <footer class="footer mt-auto footer-light">
-                        <div class="container-fluid">
-                            <div class="row">
-                                <div class="col-md-6 small"></div>
-                            </div>
+                    </div>
+                </main>
+                <footer class="footer mt-auto footer-light">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-6 small"></div>
                         </div>
-                    </footer>
-                </div>
-            </div>
-
-            <input type="hidden" id="hdnFormStatus" name="hdnFormStatus" value="0">
-            <input type="hidden" id="hdnFormId" name="hdnFormId" value="1">
-            <input type="hidden" id="hdnFormDetails" name="hdnFormDetails" value="1">
-            <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
-            <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM"/>
-        </form>
-
-        <!-- Scroll to Top Button-->
-        <a class="scroll-to-top rounded" href="#page-top">
-            <i class="fas fa-angle-up"></i>
-        </a>
-
-        <!-- Logout Modal-->
-        <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
-                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                            <span class="text-white" aria-hidden="true">×</span>
-                        </button>
                     </div>
-                    <div class="modal-body">
-                        Are you sure to logout?
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
-                        <a class="btn btn-custom lift" href="../../students/template/Logout.jsp">Logout</a>
-                    </div>
-                </div>
+                </footer>
             </div>
         </div>
 
-        <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
-        <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
-        <script src="../../resources/js/vendor/main.js"></script>                   
-    </body>
+        <input type="hidden" id="hdnFormStatus" name="hdnFormStatus" value="0">
+        <input type="hidden" id="hdnFormId" name="hdnFormId" value="1">
+        <input type="hidden" id="hdnFormDetails" name="hdnFormDetails" value="1">
+        <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
+        <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM" />
+    </form>
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Outpass Modal-->
+    <div class="modal fade" id="outpassModal" tabindex="-1" role="dialog" aria-labelledby="outpassModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="outpassModalLabel">Outpass</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Outpass form content -->
+                    <div id="outpassStatus" style="display: none;">
+                        <p id="outpassStatusText"></p>
+                    </div>
+                    <form id="outpassForm" action="submit_outpass.php" method="post" onsubmit="return validateOutpassForm()" style="display: none;">
+                        <div class="form-group">
+                            <label for="fromDate">Date (Out)</label>
+                            <input type="date" class="form-control" id="fromDate" name="fromDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fromTime">Time (Out)</label>
+                            <input type="time" class="form-control" id="fromTime" name="fromTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="toDate">Date (In)</label>
+                            <input type="date" class="form-control" id="toDate" name="toDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="toTime">Time (In)</label>
+                            <input type="time" class="form-control" id="toTime" name="toTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reason">Reason for Leave</label>
+                            <input type="text" class="form-control" id="reason" name="reason" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit for Approval</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span class="text-white" aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure to logout?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-custom lift" href="../../students/template/Logout.jsp">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+    <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
+    <script src="../../resources/js/vendor/main.js"></script>
+</body>
+
 </html>
