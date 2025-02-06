@@ -22,14 +22,14 @@ if (!isset($_SESSION['user_id'])) {
     die(json_encode(['error' => 'User not logged in']));
 }
 
-// Retrieve faculty ID from the session and ensure it's an integer
-$fa_id = (int)$_SESSION['user_id']; 
+// Retrieve HOD ID from the session and ensure it's an integer
+$hod_id = (int)$_SESSION['user_id']; 
 
-// SQL query to fetch outpass data for the faculty's students
+// SQL query to fetch outpass data for the HOD's department with status 'pending' and datetime (out) greater than present datetime
 $sql = "SELECT o.*, s.name AS student_name, s.r_no 
         FROM outpass o 
         JOIN student s ON o.s_id = s.id 
-        WHERE s.fa_id = ?";
+        WHERE s.hod_id = ? AND o.status = 'FA' AND CONCAT(o.date_out, ' ', o.time_out) > NOW()";
 
 $stmt = $conn->prepare($sql);
 
@@ -38,8 +38,8 @@ if (!$stmt) {
     die(json_encode(['error' => 'SQL Prepare failed: ' . $conn->error]));
 }
 
-// Bind the faculty ID to the prepared statement
-$stmt->bind_param("i", $fa_id);
+// Bind the HOD ID to the prepared statement
+$stmt->bind_param("i", $hod_id);
 
 // Execute the statement
 if (!$stmt->execute()) {

@@ -75,46 +75,46 @@
         }
 
         function checkOutpassStatus() {
-    $.ajax({
-        url: "fetch_outpass_status.php",
-        method: 'GET',
-        success: function (data) {
-            console.log(data); // Log the raw response
-            var outpass = JSON.parse(data);
-            
-            if (outpass.error) {
-                $('#outpassStatus').show();
-                $('#outpassStatusText').text(outpass.error);
-                $('#outpassForm').hide();
-            } else {
-                var now = new Date();
-                var dateIn = new Date(outpass.date_in + 'T' + outpass.time_in);  // Combine date and time
-                
-                if (outpass.status === 'Rejected' || (outpass.status === 'Approved' && dateIn < now)) {
-                    $('#outpassForm').show();
-                    $('#outpassStatus').hide();
-                } else if (outpass.status === 'Approved') {
-                    $('#outpassForm').hide();
-                    $('#outpassStatus').show();
-                    $('#outpassStatusText').text('Outpass Status: Approved');
-                } else if (outpass.status === 'Pending') {
-                    $('#outpassForm').hide();
-                    $('#outpassStatus').show();
-                    $('#outpassStatusText').text('Outpass Status: Pending');
-                } else {
-                    $('#outpassForm').hide();
-                    $('#outpassStatus').show();
-                    $('#outpassStatusText').text('Outpass Status: ' + outpass.status);
+            $.ajax({
+                url: 'fetch_outpass_status.php',
+                method: 'GET',
+                success: function (data) {
+                    console.log(data); // Log the raw response
+                    var outpass = JSON.parse(data);
+                    
+                    if (outpass.error) {
+                        $('#outpassForm').show();
+                        $('#outpassStatus').hide();
+                    } else {
+                        var now = new Date();
+                        var dateIn = new Date(outpass.date_in + 'T' + outpass.time_in);  // Combine date and time
+                        var dateOut = new Date(outpass.date_out + 'T' + outpass.time_out);
+                        if (outpass.status === 'Denied' || (outpass.status === 'Approved' && dateIn < now)) {
+                            $('#outpassForm').show();
+                            $('#outpassStatus').hide();
+                        } else if (outpass.status === 'Approved') {
+                            $('#outpassForm').hide();
+                            $('#outpassStatus').show();
+                            $('#outpassStatusText').text('Outpass Status: Approved');
+                        } else if (outpass.status === 'Pending' && dateOut > now) {
+                            $('#outpassForm').hide();
+                            $('#outpassStatus').show();
+                            $('#outpassStatusText').text('Outpass Status: Pending');
+                        }else if (outpass.status === 'FA' && dateOut > now) {
+                            $('#outpassForm').hide();
+                            $('#outpassStatus').show();
+                            $('#outpassStatusText').text('Outpass Status: Approved by FA');
+                        } else {
+                            $('#outpassForm').show();
+                            $('#outpassStatus').hide();
+                        }
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching outpass status:", error);
                 }
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error("Error fetching outpass status:", error);
+            });
         }
-    });
-}
-
-
     </script>
 </head>
 

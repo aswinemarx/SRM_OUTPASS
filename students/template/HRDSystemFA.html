@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>SRM Faculty Portal</title>
+    <link href="mainstyle.css" rel="stylesheet">
+    <link href="all.css" rel="stylesheet" type="text/css">
+    <link href="customstyle.css" rel="stylesheet">
+    <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
+    <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
+    <script src="jquery.min.js"></script>
+    <script src="bootstrap.bundle.min.js"></script>
+    <script src="jquery.easing.min.js"></script>
+    <script src="main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+ <script>
+    function updateDateTime() {
+        var now = new Date();
+        var options = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+        var formattedDateTime = now.toLocaleDateString('en-GB', options).replace(',', '');
+        document.getElementById('currentDateTime').textContent = formattedDateTime;
+    }
+
+    setInterval(updateDateTime, 1000);
+
+    $(document).ready(function () {
+        updateDateTime();
+        fetchOutpassByFA(); // Call to fetch outpass data
+    });
+
+    function fetchOutpassByFA() {
+        $.ajax({
+            url: 'fetch_outpass_by_fa.php',  // Your PHP endpoint
+            method: 'GET',
+            success: function (data) {
+                console.log("Fetched data:", data); // Log the raw response
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                var outpasses;
+                try {
+                    outpasses = Array.isArray(data) ? data : JSON.parse(data);
+                } catch (e) {
+                    alert("Error parsing data.");
+                    return;
+                }
+
+                if (!Array.isArray(outpasses)) {
+                    return;
+                }
+
+                console.log("Parsed data:", outpasses);
+
+                var outpassTable = $('#outpassTable tbody');
+                outpassTable.empty(); // Clear the table before appending new rows
+
+                outpasses.forEach(function (outpass) {
+                    var row = '<tr>' +
+                        '<td>' + outpass.student_name + '</td>' +
+                        '<td>' + outpass.r_no + '</td>' +
+                        '<td>' + outpass.date_out + '</td>' +
+                        '<td>' + outpass.time_out + '</td>' +
+                        '<td>' + outpass.date_in + '</td>' +
+                        '<td>' + outpass.time_in + '</td>' +
+                        '<td>' + outpass.reason_for_leave + '</td>' +
+                        '<td>' +
+                        '<button class="btn btn-success btn-sm" onclick="approveOutpass(' + outpass.outpass_id + ')">Approve</button>' +
+                        ' <button class="btn btn-danger btn-sm" onclick="declineOutpass(' + outpass.outpass_id + ')">Decline</button>' +
+                        '</td>' +
+                        '</tr>';
+                    outpassTable.append(row);
+                });
+            },
+            error: function (xhr, status, error) {
+                alert("Error fetching data from the server.");
+            }
+        });
+    }
+
+    function approveOutpass(outpass_id) {
+        $.ajax({
+            url: 'approve_FA.php',
+            method: 'POST',
+            data: { outpass_id: outpass_id },
+            success: function (response) {
+                console.log("Approve response:", response);
+
+                try {
+                    response = JSON.parse(response);
+                    console.log("Parsed response:", response);
+                } catch (e) {
+                    alert("Error parsing response.");
+                    return;
+                }
+
+                if (response.error) {
+                    alert("Error: " + response.error);
+                    return;
+                }
+
+                
+            },
+            error: function (xhr, status, error) {
+                alert("Outpass approved successfully.");
+            }
+        });
+    }
+
+    function declineOutpass(outpass_id) {
+        $.ajax({
+            url: 'decline_FA.php',
+            method: 'POST',
+            data: { outpass_id: outpass_id },
+            success: function(response) {
+                console.log("Decline response:", response);
+
+                try {
+                    response = JSON.parse(response);
+                    console.log("Parsed response:", response);
+                } catch (e) {
+                    alert("Error parsing response.");
+                    return;
+                }
+
+                if (response.error) {
+                    alert("Error: " + response.error);
+                    return;
+                }
+
+                
+            },
+            error: function(xhr, status, error) {
+                alert("Outpass declined successfully.");
+            }
+        });
+    }
+</script>
+
+
+</head>
+
+<body class="nav-fixed" onload="updateDateTime()">
+    <form id="userHomePage" name="userHomePage" method="post">
+        <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
+            <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+            <a class="navbar-brand" href="../../faculty/loginManager/UserHomePage.jsp">
+                <img src="../../resources/Image/srmist.png" alt="SRM Logo" />
+                <br><font style="font-size: 9pt;">Faculty Portal</font>
+            </a>
+            <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
+
+            <ul class="navbar-nav align-items-center ml-auto text-center">
+                <a style='cursor:pointer;'>
+                    <span class="dropdown-item" data-toggle="modal" data-target="#logoutModal">
+                        <div class="dropdown-item-icon"><i class="fas fa-sign-out-alt"></i></div>
+                        Logout
+                    </span>
+                </a>
+            </ul>
+        </nav>
+
+        <div id="layoutSidenav">
+            <div id="layoutSidenav_nav">
+                <nav class="sidenav shadow-right sidenav-light">
+                    <div class="sidenav-menu">
+                        <div class="nav accordion" id="accordionSidenav">
+                            <!-- Sidenav Heading -->
+                            <!-- <div class="sidenav-menu-heading">Menus</div> -->
+
+                            <!-- Individual Menu Start -->
+                            <a class="nav-link" href="dashboard.html">
+                                <div class="nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                Dashboard
+                            </a>
+                            <!-- Individual Menu End -->
+
+                            <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
+                                <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Sidenav Footer-->
+                    <div class="sidenav-footer">
+                        <div class="sidenav-footer-content">
+                            <div class="sidenav-footer-subtitle"></div>
+                            <div class="sidenav-footer-subtitle"></div>
+                            <div class="sidenav-footer-title" id="currentDateTime"></div>
+                        </div>
+                        <input type="hidden" style="color:white;" id="hidchkHostelOpen" name="hidchkHostelOpen" size="10" value="''">
+                    </div>
+                </nav>
+            </div>
+            <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="card border-custom mb-2 mt-1">
+                                    <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Faculty Profile</div>
+                                    <div class="card-body py-1">
+                                        <table class="table table-borderless mb-0">
+                                            <tbody>
+                                                <tr class="border-bottom">
+                                                    <td style="width: 30%">
+                                                        Faculty Name
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="facultyName"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Faculty ID
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="facultyId"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Email ID
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="emailId"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Institution
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Department
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold">Computer Science and Engineering</div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-custom mb-4">
+                                    <div class="card-body text-center">
+                                        <div id="divImage">
+                                            <img class="img-account-profile mb-2 imgPhoto" src="faculty_photo.jpg" alt="Faculty Photo" style="height: 150px;width:150px;">
+                                        </div>
+                                        <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div>
+                                        <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container-fluid">
+                        <div class="row justify-content-center">
+                            <div class="col-md-12">
+                                <div class="card border-custom mb-4">
+                                    <div class="card-header bg-custom text-white"><i class="fa fa-file-alt"></i> Student Outpasses</div>
+                                    <div class="card-body py-1">
+                                        <table class="table table-bordered" id="outpassTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Student Name</th>
+                                                    <th>Register No.</th>
+                                                    <th>Date (Out)</th>
+                                                    <th>Time (Out)</th>
+                                                    <th>Date (In)</th>
+                                                    <th>Time (In)</th>
+                                                    <th>Reason</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Outpass data will be appended here by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <footer class="footer mt-auto footer-light">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-6 small"></div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+
+        <input type="hidden" id="hdnFormStatus" name="hdnFormStatus" value="0">
+        <input type="hidden" id="hdnFormId" name="hdnFormId" value="1">
+        <input type="hidden" id="hdnFormDetails" name="hdnFormDetails" value="1">
+        <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
+        <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM" />
+    </form>
+
+    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+    <script src="jquery.easing.min.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>

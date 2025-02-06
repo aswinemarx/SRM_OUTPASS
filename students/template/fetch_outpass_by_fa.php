@@ -29,7 +29,7 @@ $fa_id = (int)$_SESSION['user_id'];
 $sql = "SELECT o.*, s.name AS student_name, s.r_no 
         FROM outpass o 
         JOIN student s ON o.s_id = s.id 
-        WHERE s.fa_id = ?";
+        WHERE s.fa_id = ? and o.status = 'pending'";
 
 $stmt = $conn->prepare($sql);
 
