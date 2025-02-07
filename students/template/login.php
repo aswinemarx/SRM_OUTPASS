@@ -2,7 +2,7 @@
 session_start();
 $servername = "localhost";
 $username = "root"; // Change this to your MySQL username
-$password = "samsung8.9";    // Change this to your MySQL password
+$password = "";    // Change this to your MySQL password
 $dbname = "srm_student_portal";
 
 // Create connection
@@ -15,7 +15,7 @@ if ($conn->connect_error) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get the form data
-    $login = $_POST['login'];       // NetID (without '@srmist.edu.in')
+    $login = $_POST['login'] . '@srmist.edu.in'; // Append '@srmist.edu.in' to the NetID
     $passwd = $_POST['passwd'];     // Password entered by the user
     $userType = $_POST['userType']; // User type (student, fa, hod, warden)
 
@@ -50,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     header("Location: HRDSystem.html"); // Redirect to HRDSystem.html for students
                     exit();
                 } else {
-                    $error = "No student found with the provided login.";
+                    $_SESSION['error'] = "No student found with the provided login.";
                 }
             } else if ($userType == 'fa') {
                 // Fetch the faculty ID based on the email (login)
@@ -66,7 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     header("Location: HRDSystemFA.html"); // Redirect to HRDSystemFA.html for faculty
                     exit();
                 } else {
-                    $error = "No faculty found with the provided login.";
+                    $_SESSION['error'] = "No faculty found with the provided login.";
                 }
             } else if ($userType == 'hod') {
                 // Fetch the HOD ID based on the email (login)
@@ -82,16 +82,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     header("Location: HRDSystemHOD.html"); // Redirect to HRDSystemHOD.html for HOD
                     exit();
                 } else {
-                    $error = "No HOD found with the provided login.";
+                    $_SESSION['error'] = "No HOD found with the provided login.";
                 }
             }
         } else {
-            $error = "Invalid password.";
+            $_SESSION['error'] = "Invalid net id or password.";
         }
     } else {
-        $error = "No user found with the provided credentials.";
+        $_SESSION['error'] = "Invalid net id or password.";
     }
     $stmt->close();
+    header("Location: login.html");
+    exit();
 }
 $conn->close();
 ?>

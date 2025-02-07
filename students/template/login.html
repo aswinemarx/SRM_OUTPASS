@@ -10,10 +10,10 @@
     <link rel="stylesheet" href="all.css">
     <link rel="stylesheet" href="mainstyle.css">
     <link href='../../resources/Image/college_icon.png' type='Image/x-icon' rel='icon'>
-    <script src="../../resources/js/vendor/jquery.min.js"></script>
-    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+    <script src="jquery.min.js"></script>
     <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
-    <script src="../../resources/js/vendor/main.js"></script>
+    <script src="main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="container">
@@ -50,7 +50,7 @@
                                                         <span class="input-group-text text-custom" id="inputGroupPrepend"><i class="fa fa-user "></i></span>
                                                         <input type="text" class="form-control clsalphanumeric" name="login" id="login" placeholder="NetID" required maxlength="25">
                                                         <div class="invalid-feedback" id='divUserId'>
-                                                            Enter an User Id
+                                                            Enter a User Id
                                                         </div>
                                                     </div>
                                                 </div>
@@ -71,10 +71,14 @@
                                                         <option value="fa">Faculty</option>
                                                         <option value="hod">HOD</option>
                                                     </select>
+                                                    <div class="invalid-feedback">
+                                                        Select a User Type
+                                                    </div>
                                                 </div>
                                                 <div class="form-group">
                                                     <button type="submit" class="btn btn-primary btn-block">Login</button>
                                                 </div>
+                                                
                                             </form>
                                         </div>
                                     </div>
@@ -134,9 +138,6 @@
     </div>
 
     <script>
-        var d = new Date();
-        var n = d.getFullYear();
-
         $(document).ready(function () {
             $(window).keydown(function (event) {
                 if (event.keyCode == 13) {
@@ -163,6 +164,23 @@
                 }
             });
         });
+
+        // Bootstrap validation
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
     </script>
 </body>
 </html>

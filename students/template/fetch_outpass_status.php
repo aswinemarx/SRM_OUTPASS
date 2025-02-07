@@ -15,7 +15,7 @@ if ($conn->connect_error) {
 
 $s_id = $_SESSION['user_id']; // Get the student ID from the session
 
-$sql = "SELECT * FROM outpass WHERE s_id = ? ORDER BY outpass_id DESC LIMIT 1";
+$sql = "SELECT * FROM outpass,student WHERE s_id = ? ORDER BY outpass_id DESC LIMIT 1";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $s_id);
 $stmt->execute();
