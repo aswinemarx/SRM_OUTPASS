@@ -12,13 +12,15 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$studentId = 1; // Example student ID
-$sql = "SELECT id, name, register_no, email FROM students WHERE id = $studentId";
+$sql = "SELECT id, name, register_no, email FROM students";
 $result = $conn->query($sql);
 
+$studentsData = [];
 if ($result->num_rows > 0) {
-    $studentData = $result->fetch_assoc();
-    echo json_encode($studentData);
+    while($row = $result->fetch_assoc()) {
+        $studentsData[] = $row;
+    }
+    echo json_encode($studentsData);
 } else {
     echo json_encode([]);
 }

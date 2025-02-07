@@ -17,140 +17,140 @@
     <script src="main.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
- <script>
-    function updateDateTime() {
-        var now = new Date();
-        var options = {
-            weekday: 'short',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        };
-        var formattedDateTime = now.toLocaleDateString('en-GB', options).replace(',', '');
-        document.getElementById('currentDateTime').textContent = formattedDateTime;
-    }
+    <script>
+        function updateDateTime() {
+            var now = new Date();
+            var options = {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            var formattedDateTime = now.toLocaleDateString('en-GB', options).replace(',', '');
+            document.getElementById('currentDateTime').textContent = formattedDateTime;
+        }
 
-    setInterval(updateDateTime, 1000);
+        setInterval(updateDateTime, 1000);
 
-    $(document).ready(function () {
-        updateDateTime();
-        fetchOutpassByFA(); // Call to fetch outpass data
-    });
-
-    function fetchOutpassByFA() {
-        $.ajax({
-            url: 'fetch_outpass_by_fa.php',  // Your PHP endpoint
-            method: 'GET',
-            success: function (data) {
-                console.log("Fetched data:", data); // Log the raw response
-
-                if (data.error) {
-                    alert("Error: " + data.error);
-                    return;
-                }
-
-                var outpasses;
-                try {
-                    outpasses = Array.isArray(data) ? data : JSON.parse(data);
-                } catch (e) {
-                    alert("Error parsing data.");
-                    return;
-                }
-
-                if (!Array.isArray(outpasses)) {
-                    return;
-                }
-
-                console.log("Parsed data:", outpasses);
-
-                var outpassTable = $('#outpassTable tbody');
-                outpassTable.empty(); // Clear the table before appending new rows
-
-                outpasses.forEach(function (outpass) {
-                    var row = '<tr>' +
-                        '<td>' + outpass.student_name + '</td>' +
-                        '<td>' + outpass.r_no + '</td>' +
-                        '<td>' + outpass.date_out + '</td>' +
-                        '<td>' + outpass.time_out + '</td>' +
-                        '<td>' + outpass.date_in + '</td>' +
-                        '<td>' + outpass.time_in + '</td>' +
-                        '<td>' + outpass.reason_for_leave + '</td>' +
-                        '<td>' +
-                        '<button class="btn btn-success btn-sm" onclick="approveOutpass(' + outpass.outpass_id + ')">Approve</button>' +
-                        ' <button class="btn btn-danger btn-sm" onclick="declineOutpass(' + outpass.outpass_id + ')">Decline</button>' +
-                        '</td>' +
-                        '</tr>';
-                    outpassTable.append(row);
-                });
-            },
-            error: function (xhr, status, error) {
-                alert("Error fetching data from the server.");
-            }
+        $(document).ready(function () {
+            updateDateTime();
+            fetchOutpassByFA(); // Call to fetch outpass data
         });
-    }
 
-    function approveOutpass(outpass_id) {
-        $.ajax({
-            url: 'approve_FA.php',
-            method: 'POST',
-            data: { outpass_id: outpass_id },
-            success: function (response) {
-                console.log("Approve response:", response);
+        function fetchOutpassByFA() {
+            $.ajax({
+                url: 'fetch_outpass_by_fa.php',  // Your PHP endpoint
+                method: 'GET',
+                success: function (data) {
+                    console.log("Fetched data:", data); // Log the raw response
 
-                try {
-                    response = JSON.parse(response);
-                    console.log("Parsed response:", response);
-                } catch (e) {
-                    alert("Error parsing response.");
-                    return;
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                        return;
+                    }
+
+                    var outpasses;
+                    try {
+                        outpasses = Array.isArray(data) ? data : JSON.parse(data);
+                    } catch (e) {
+                        alert("Error parsing data.");
+                        return;
+                    }
+
+                    if (!Array.isArray(outpasses)) {
+                        return;
+                    }
+
+                    console.log("Parsed data:", outpasses);
+
+                    var outpassTable = $('#outpassTable tbody');
+                    outpassTable.empty(); // Clear the table before appending new rows
+
+                    outpasses.forEach(function (outpass) {
+                        var row = '<tr>' +
+                            '<td>' + outpass.student_name + '</td>' +
+                            '<td>' + outpass.r_no + '</td>' +
+                            '<td>' + outpass.date_out + '</td>' +
+                            '<td>' + outpass.time_out + '</td>' +
+                            '<td>' + outpass.date_in + '</td>' +
+                            '<td>' + outpass.time_in + '</td>' +
+                            '<td>' + outpass.reason_for_leave + '</td>' +
+                            '<td>' +
+                            '<button class="btn btn-success btn-sm" onclick="approveOutpass(' + outpass.outpass_id + ')">Approve</button>' +
+                            ' <button class="btn btn-danger btn-sm" onclick="declineOutpass(' + outpass.outpass_id + ')">Decline</button>' +
+                            '</td>' +
+                            '</tr>';
+                        outpassTable.append(row);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    alert("Error fetching data from the server.");
                 }
+            });
+        }
 
-                if (response.error) {
-                    alert("Error: " + response.error);
-                    return;
+        function approveOutpass(outpass_id) {
+            $.ajax({
+                url: 'approve_FA.php',
+                method: 'POST',
+                data: { outpass_id: outpass_id },
+                success: function (response) {
+                    console.log("Approve response:", response);
+
+                    try {
+                        response = JSON.parse(response);
+                        console.log("Parsed response:", response);
+                    } catch (e) {
+                        alert("Error parsing response.");
+                        return;
+                    }
+
+                    if (response.error) {
+                        alert("Error: " + response.error);
+                        return;
+                    }
+
+
+                },
+                error: function (xhr, status, error) {
+                    alert("Outpass approved successfully.");
                 }
+            });
+        }
 
-                
-            },
-            error: function (xhr, status, error) {
-                alert("Outpass approved successfully.");
-            }
-        });
-    }
+        function declineOutpass(outpass_id) {
+            $.ajax({
+                url: 'decline_FA.php',
+                method: 'POST',
+                data: { outpass_id: outpass_id },
+                success: function (response) {
+                    console.log("Decline response:", response);
 
-    function declineOutpass(outpass_id) {
-        $.ajax({
-            url: 'decline_FA.php',
-            method: 'POST',
-            data: { outpass_id: outpass_id },
-            success: function(response) {
-                console.log("Decline response:", response);
+                    try {
+                        response = JSON.parse(response);
+                        console.log("Parsed response:", response);
+                    } catch (e) {
+                        alert("Error parsing response.");
+                        return;
+                    }
 
-                try {
-                    response = JSON.parse(response);
-                    console.log("Parsed response:", response);
-                } catch (e) {
-                    alert("Error parsing response.");
-                    return;
+                    if (response.error) {
+                        alert("Error: " + response.error);
+                        return;
+                    }
+
+
+                },
+                error: function (xhr, status, error) {
+                    alert("Outpass declined successfully.");
                 }
-
-                if (response.error) {
-                    alert("Error: " + response.error);
-                    return;
-                }
-
-                
-            },
-            error: function(xhr, status, error) {
-                alert("Outpass declined successfully.");
-            }
-        });
-    }
-</script>
+            });
+        }
+    </script>
 
 
 </head>
@@ -184,10 +184,6 @@
                             <!-- <div class="sidenav-menu-heading">Menus</div> -->
 
                             <!-- Individual Menu Start -->
-                            <a class="nav-link" href="dashboard.html">
-                                <div class="nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                                Dashboard
-                            </a>
                             <!-- Individual Menu End -->
 
                             <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
@@ -223,14 +219,6 @@
                                                     </td>
                                                     <td>
                                                         <div class="font-weight-bold font-weight-700 text-custom" id="facultyName"></div>
-                                                    </td>
-                                                </tr>
-                                                <tr class="border-bottom">
-                                                    <td>
-                                                        Faculty ID
-                                                    </td>
-                                                    <td>
-                                                        <div class="font-weight-bold font-weight-700 text-custom" id="facultyId"></div>
                                                     </td>
                                                 </tr>
                                                 <tr class="border-bottom">
@@ -320,6 +308,27 @@
         <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
         <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM" />
     </form>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span class="text-white" aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure to logout?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-custom lift" href="../../students/template/Logout.jsp">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
     <script src="jquery.easing.min.js"></script>
