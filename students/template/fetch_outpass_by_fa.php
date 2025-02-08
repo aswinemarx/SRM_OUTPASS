@@ -26,7 +26,7 @@ if (!isset($_SESSION['user_id'])) {
 $fa_id = (int)$_SESSION['user_id']; 
 
 // SQL query to fetch outpass data for the faculty's students
-$sql = "SELECT o.*, s.name AS student_name, s.r_no 
+$sql = "SELECT o.*, s.name AS student_name, s.r_no,s.p_no
         FROM outpass o 
         JOIN student s ON o.s_id = s.id 
         WHERE s.fa_id = ? and o.status = 'pending'";
