@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en"></html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content=""width=device-width, initial-scale=""1, shrink-to-fit=""no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>SRM HOD Portal</title>
     <link href="mainstyle.css" rel="stylesheet">
     <link href="all.css" rel="stylesheet" type="text/css">
@@ -33,26 +33,26 @@
             var formattedDateTime = now.toLocaleDateString('en-GB', options).replace(',', '');
             document.getElementById('currentDateTime').textContent = formattedDateTime;
         }
-    
+
         setInterval(updateDateTime, 1000);
-    
+
         $(document).ready(function () {
             updateDateTime();
             fetchOutpassByFA(); // Call to fetch outpass data
         });
-    
+
         function fetchOutpassByFA() {
             $.ajax({
                 url: 'fetch_outpass_by_hod.php',  // Your PHP endpoint
                 method: 'GET',
                 success: function (data) {
                     console.log("Fetched data:", data); // Log the raw response
-    
+
                     if (data.error) {
                         alert("Error: " + data.error);
                         return;
                     }
-    
+
                     var outpasses;
                     try {
                         outpasses = Array.isArray(data) ? data : JSON.parse(data);
@@ -60,16 +60,16 @@
                         alert("Error parsing data.");
                         return;
                     }
-    
+
                     if (!Array.isArray(outpasses)) {
                         return;
                     }
-    
+
                     console.log("Parsed data:", outpasses);
-    
+
                     var outpassTable = $('#outpassTable tbody');
                     outpassTable.empty(); // Clear the table before appending new rows
-    
+
                     outpasses.forEach(function (outpass) {
                         var row = '<tr>' +
                             '<td>' + outpass.student_name + '</td>' +
@@ -92,7 +92,7 @@
                 }
             });
         }
-    
+
         function approveOutpass(outpass_id) {
             $.ajax({
                 url: 'approve_HOD.php',
@@ -100,7 +100,7 @@
                 data: { outpass_id: outpass_id },
                 success: function (response) {
                     console.log("Approve response:", response);
-    
+
                     try {
                         response = JSON.parse(response);
                         console.log("Parsed response:", response);
@@ -108,28 +108,28 @@
                         alert("Error parsing response.");
                         return;
                     }
-    
+
                     if (response.error) {
                         alert("Error: " + response.error);
                         return;
                     }
-    
-                    
+
+
                 },
                 error: function (xhr, status, error) {
                     alert("Outpass approved successfully.");
                 }
             });
         }
-    
+
         function declineOutpass(outpass_id) {
             $.ajax({
                 url: 'decline_HOD.php',
                 method: 'POST',
                 data: { outpass_id: outpass_id },
-                success: function(response) {
+                success: function (response) {
                     console.log("Decline response:", response);
-    
+
                     try {
                         response = JSON.parse(response);
                         console.log("Parsed response:", response);
@@ -137,15 +137,15 @@
                         alert("Error parsing response.");
                         return;
                     }
-    
+
                     if (response.error) {
                         alert("Error: " + response.error);
                         return;
                     }
-    
-                    
+
+
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     alert("Outpass declined successfully.");
                 }
             });
@@ -178,10 +178,7 @@
                 <nav class="sidenav shadow-right sidenav-light">
                     <div class="sidenav-menu">
                         <div class="nav accordion" id="accordionSidenav">
-                            <a class="nav-link" href="dashboard.html">
-                                <div class="nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                                Dashboard
-                            </a>
+                            <!-- Removed Dashboard Link -->
                             <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
                                 <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
                                 Logout
@@ -243,6 +240,27 @@
         <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
         <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM" />
     </form>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span class="text-white" aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure to logout?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-custom lift" href="../../students/template/Logout.jsp">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
     <script src="jquery.easing.min.js"></script>
