@@ -41,6 +41,36 @@
             fetchOutpassByFA(); // Call to fetch outpass data
         });
 
+        function fetchFADetails() {
+            var userId = $('#user_id').val(); // Get the user_id from the hidden input field
+
+            $.ajax({
+                url: 'fetch_fa_details.php',
+                method: 'GET',
+                data: { fa_id: userId }, // Pass the user_id as fa_id
+                success: function (data) {
+                    console.log("Fetched FA details:", data);
+
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                        return;
+                    }
+
+                    $('#facultyName').text(data.name);
+                    $('#emailId').text(data.email);
+                    $('#department').text(data.dept);
+                },
+                error: function (xhr, status, error) {
+                    alert("Error fetching FA details from the server.");
+                }
+            });
+        }
+
+        // Call this function when the document is ready
+        $(document).ready(function () {
+            fetchFADetails();
+        });
+
         function fetchOutpassByFA() {
             $.ajax({
                 url: 'fetch_outpass_by_fa.php',  // Your PHP endpoint
@@ -79,6 +109,7 @@
                             '<td>' + outpass.date_in + '</td>' +
                             '<td>' + outpass.time_in + '</td>' +
                             '<td>' + outpass.reason_for_leave + '</td>' +
+                            '<td>' + outpass.p_no + '</td>' +
                             '<td>' +
                             '<button class="btn btn-success btn-sm" onclick="approveOutpass(' + outpass.outpass_id + ')">Approve</button>' +
                             ' <button class="btn btn-danger btn-sm" onclick="declineOutpass(' + outpass.outpass_id + ')">Decline</button>' +
@@ -114,7 +145,7 @@
                         return;
                     }
 
-
+                    alert("Outpass approved successfully.");
                 },
                 error: function (xhr, status, error) {
                     alert("Outpass approved successfully.");
@@ -143,18 +174,17 @@
                         return;
                     }
 
-
+                    alert("Outpass declined successfully.");
                 },
                 error: function (xhr, status, error) {
-                    alert("Outpass declined successfully.");
+                    alert("Error declining outpass.");
                 }
             });
         }
     </script>
-
-
 </head>
 
+<body class="nav-fixed" onload="updateDateTime()">
 <body class="nav-fixed" onload="updateDateTime()">
     <form id="userHomePage" name="userHomePage" method="post">
         <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
@@ -242,7 +272,7 @@
                                                         Department
                                                     </td>
                                                     <td>
-                                                        <div class="font-weight-bold">Computer Science and Engineering</div>
+                                                        <div class="font-weight-bold" id="department"></div>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -327,7 +357,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-custom lift" href="../../students/template/Logout.jsp">Logout</a>
+                    <a class="btn btn-custom lift" href="login.html">Logout</a>
                 </div>
             </div>
         </div>

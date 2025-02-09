@@ -22,50 +22,46 @@ if (!isset($_SESSION['user_id'])) {
     die(json_encode(['error' => 'User not logged in']));
 }
 
-// Retrieve faculty ID from the session and ensure it's an integer
-$fa_id = (int)$_SESSION['user_id']; 
+// Retrieve student ID from the session and ensure it's an integer
+$student_id = (int)$_SESSION['user_id'];
 
-// SQL query to fetch outpass data for the faculty's students
-$sql = "SELECT o.*, s.name AS student_name, s.r_no 
-        FROM outpass o 
-        JOIN student s ON o.s_id = s.id 
-        WHERE s.fa_id = ?";
+// Retrieve form data
+$fromDate = $_POST['fromDate'];
+$fromTime = $_POST['fromTime'];
+$toDate = $_POST['toDate'];
+$toTime = $_POST['toTime'];
+$reason = $_POST['reason'];
 
+// Validate the dates
+$fromDateTime = strtotime($fromDate . ' ' . $fromTime);
+$toDateTime = strtotime($toDate . ' ' . $toTime);
+$now = time();
+$threeDaysFromNow = strtotime('+3 days');
+
+if ($fromDateTime <= $now || $fromDateTime > $threeDaysFromNow) {
+    die(json_encode(['error' => 'Date (Out) must be greater than the present date and lesser than 3 days from now']));
+}
+
+if ($toDateTime <= $fromDateTime) {
+    die(json_encode(['error' => 'Date (In) must be greater than Date (Out)']));
+}
+
+// Insert outpass request into the database
+$sql = "INSERT INTO outpass (s_id, date_out, time_out, date_in, time_in, reason_for_leave, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')";
 $stmt = $conn->prepare($sql);
 
-// Check if the statement preparation was successful
 if (!$stmt) {
     die(json_encode(['error' => 'SQL Prepare failed: ' . $conn->error]));
 }
 
-// Bind the faculty ID to the prepared statement
-$stmt->bind_param("i", $fa_id);
+$stmt->bind_param("isssss", $student_id, $fromDate, $fromTime, $toDate, $toTime, $reason);
 
-// Execute the statement
-if (!$stmt->execute()) {
-    die(json_encode(['error' => 'SQL Execute failed: ' . $stmt->error]));
-}
-
-$result = $stmt->get_result();
-
-// Check if any rows were fetched
-if ($result->num_rows > 0) {
-    $outpasses = [];
-    
-    // Fetch the rows and add them to the outpasses array
-    while ($row = $result->fetch_assoc()) {
-        $outpasses[] = $row;
-    }
-
-    // Return the outpass data as a JSON response
-    header('Content-Type: application/json');
-    echo json_encode($outpasses);
+if ($stmt->execute()) {
+    echo json_encode(['success' => 'Outpass request submitted successfully']);
 } else {
-    // If no records are found, return a message indicating this
-    echo json_encode(['message' => 'No outpass records found']);
+    echo json_encode(['error' => 'SQL Execute failed: ' . $stmt->error]);
 }
 
-// Close the prepared statement and database connection
 $stmt->close();
 $conn->close();
 ?>

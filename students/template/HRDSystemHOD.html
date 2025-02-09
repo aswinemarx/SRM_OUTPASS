@@ -39,7 +39,33 @@
         $(document).ready(function () {
             updateDateTime();
             fetchOutpassByFA(); // Call to fetch outpass data
+            fetchHODDetails(); // Call to fetch HOD details
         });
+
+        function fetchHODDetails() {
+            var userId = $('#user_id').val();
+            $.ajax({
+                
+                url: 'fetch_hod_details.php',
+                method: 'GET',
+                data: { hod_id: userId }, // Replace with the actual HOD ID
+                success: function (data) {
+                    console.log("Fetched HOD details:", data);
+
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                        return;
+                    }
+
+                    $('#hodName').text(data.name);
+                    $('#hodEmailId').text(data.email);
+                    $('#hodDepartment').text(data.dept);
+                },
+                error: function (xhr, status, error) {
+                    alert("Error fetching HOD details from the server.");
+                }
+            });
+        }
 
         function fetchOutpassByFA() {
             $.ajax({
@@ -197,27 +223,87 @@
                 <main>
                     <div class="container-fluid">
                         <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="card border-custom mb-2 mt-1">
+                                    <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> HOD Profile</div>
+                                    <div class="card-body py-1">
+                                        <table class="table table-borderless mb-0">
+                                            <tbody>
+                                                <tr class="border-bottom">
+                                                    <td style="width: 30%">
+                                                        HOD Name
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="hodName"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Email ID
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="hodEmailId"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Institution
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-bottom">
+                                                    <td>
+                                                        Department
+                                                    </td>
+                                                    <td>
+                                                        <div class="font-weight-bold" id="hodDepartment"></div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-custom mb-4">
+                                    <div class="card-body text-center">
+                                        <div id="divImage">
+                                            <img class="img-account-profile mb-2 imgPhoto" src="hod_photo.jpg" alt="HOD Photo" style="height: 150px;width:150px;">
+                                        </div>
+                                        <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div>
+                                        <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container-fluid">
+                        <div class="row justify-content-center">
                             <div class="col-md-12">
                                 <div class="card border-custom mb-4">
                                     <div class="card-header bg-custom text-white"><i class="fa fa-file-alt"></i> Student Outpasses</div>
                                     <div class="card-body py-1">
-                                        <table class="table table-bordered" id="outpassTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>Student Name</th>
-                                                    <th>Register No.</th>
-                                                    <th>Date (Out)</th>
-                                                    <th>Time (Out)</th>
-                                                    <th>Date (In)</th>
-                                                    <th>Time (In)</th>
-                                                    <th>Reason</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <!-- Outpass data will be appended here by JavaScript -->
-                                            </tbody>
-                                        </table>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered" id="outpassTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student Name</th>
+                                                        <th>Register No.</th>
+                                                        <th>Date (Out)</th>
+                                                        <th>Time (Out)</th>
+                                                        <th>Date (In)</th>
+                                                        <th>Time (In)</th>
+                                                        <th>Reason</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Outpass data will be appended here by JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -256,7 +342,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-custom lift" href="../../students/template/Logout.jsp">Logout</a>
+                    <a class="btn btn-custom lift" href="login.html">Logout</a>
                 </div>
             </div>
         </div>
