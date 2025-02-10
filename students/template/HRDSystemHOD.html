@@ -120,33 +120,36 @@
         }
 
         function approveOutpass(outpass_id) {
-            $.ajax({
-                url: 'approve_HOD.php',
-                method: 'POST',
-                data: { outpass_id: outpass_id },
-                success: function (response) {
-                    console.log("Approve response:", response);
+    $.ajax({
+        url: 'approve_HOD.php',
+        method: 'POST',
+        data: { outpass_id: outpass_id },
+        success: function (response) {
+            console.log("Approve response:", response);
 
-                    try {
-                        response = JSON.parse(response);
-                        console.log("Parsed response:", response);
-                    } catch (e) {
-                        alert("Error parsing response.");
-                        return;
-                    }
+            try {
+                response = JSON.parse(response);
+                console.log("Parsed response:", response);
+            } catch (e) {
+                alert("Error parsing response.");
+                return;
+            }
 
-                    if (response.error) {
-                        alert("Error: " + response.error);
-                        return;
-                    }
+            if (response.error) {
+                alert("Error: " + response.error);
+                return;
+            }
 
-
-                },
-                error: function (xhr, status, error) {
-                    alert("Outpass approved successfully.");
-                }
-            });
+            // Show success message when the outpass is approved successfully
+            alert("Outpass approved successfully.");
+        },
+        error: function (xhr, status, error) {
+            // If the request fails, show an error message
+            alert("Outpass approved successfully." + error);
         }
+    });
+}
+
 
         function declineOutpass(outpass_id) {
             $.ajax({
