@@ -205,12 +205,16 @@
                 return;
             }
 
+            var addressType = $('#addressType').val();
+            var address = addressType === 'home' ? $('#address').val() : $('#address').val();
+
             var formData = {
                 fromDate: $('#fromDate').val(),
                 fromTime: $('#fromTime').val(),
                 toDate: $('#toDate').val(),
                 toTime: $('#toTime').val(),
-                reason: $('#reason').val()
+                reason: $('#reason').val(),
+                address: address // Include the address field
             };
 
             $.ajax({
@@ -232,6 +236,33 @@
                     alert("Error submitting outpass request: " + error);
                 }
             });
+        }
+
+        function handleAddressChange() {
+            var addressType = document.getElementById('addressType').value;
+            var addressInputGroup = document.getElementById('addressInputGroup');
+            var addressInput = document.getElementById('address');
+
+            if (addressType === 'home') {
+                // Fetch home address from the database
+                $.ajax({
+                    url: 'fetch_home_address.php', // URL to fetch home address
+                    method: 'GET',
+                    success: function (data) {
+                        var homeAddress = JSON.parse(data).address;
+                        addressInput.value = homeAddress;
+                        addressInputGroup.style.display = 'none';
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching home address:", error);
+                    }
+                });
+            } else if (addressType === 'other') {
+                addressInput.value = '';
+                addressInputGroup.style.display = 'block';
+            } else {
+                addressInputGroup.style.display = 'none';
+            }
         }
     </script>
 </head>
@@ -414,6 +445,18 @@
                         <div class="form-group">
                             <label for="reason">Reason for Leave</label>
                             <input type="text" class="form-control" id="reason" name="reason" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="addressType">Address</label>
+                            <select class="form-control" id="addressType" name="addressType" required onchange="handleAddressChange()">
+                                <option value="" disabled selected>Select Address Type</option>
+                                <option value="home">Home</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="addressInputGroup" style="display: none;">
+                            <label for="address">Enter Address</label>
+                            <input type="text" class="form-control" id="address" name="address">
                         </div>
                         <button type="submit" class="btn btn-primary">Submit for Approval</button>
                     </form>
