@@ -108,7 +108,7 @@
                             '<td>' + outpass.time_out + '</td>' +
                             '<td>' + outpass.date_in + '</td>' +
                             '<td>' + outpass.time_in + '</td>' +
-                            '<td>' + outpass.reason_for_leave + '</td>' +
+                            '<td><button class="btn btn-info btn-sm" onclick="viewDetails(' + outpass.outpass_id + ')">View Details</button></td>' +
                             '<td>' + outpass.p_no + '</td>' +
                             '<td><input type="text" class="form-control" id="confirmedWith_' + outpass.outpass_id + '"></td>' +
                             '<td>' +
@@ -191,6 +191,30 @@
                 },
                 error: function (xhr, status, error) {
                     alert("Error declining outpass.");
+                }
+            });
+        }
+
+        function viewDetails(outpass_id) {
+            $.ajax({
+                url: 'fetch_outpass_details.php', // URL to fetch outpass details
+                method: 'GET',
+                data: { outpass_id: outpass_id },
+                success: function (data) {
+                    var outpass = JSON.parse(data);
+                    if (outpass) {
+                        var details = `
+                            <p><strong>Reason:</strong> ${outpass.reason_for_leave}</p>
+                            <p><strong>Address:</strong> ${outpass.address}</p>
+                        `;
+                        $('#detailsModalBody').html(details);
+                        $('#detailsModal').modal('show');
+                    } else {
+                        alert("No details found for this outpass.");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert("Error fetching outpass details: " + error);
                 }
             });
         }
@@ -371,6 +395,26 @@
                 <div class="modal-footer">
                     <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
                     <a class="btn btn-custom lift" href="login.html">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsModalLabel">Outpass Details</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="detailsModalBody">
+                    <!-- Details will be populated here by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
