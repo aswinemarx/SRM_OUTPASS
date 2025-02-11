@@ -110,6 +110,7 @@
                             '<td>' + outpass.time_in + '</td>' +
                             '<td>' + outpass.reason_for_leave + '</td>' +
                             '<td>' + outpass.p_no + '</td>' +
+                            '<td><input type="text" class="form-control" id="confirmedWith_' + outpass.outpass_id + '"></td>' +
                             '<td>' +
                             '<button class="btn btn-success btn-sm" onclick="approveOutpass(' + outpass.outpass_id + ')">Approve</button>' +
                             ' <button class="btn btn-danger btn-sm" onclick="declineOutpass(' + outpass.outpass_id + ')">Decline</button>' +
@@ -125,10 +126,16 @@
         }
 
         function approveOutpass(outpass_id) {
+            var confirmedWith = $('#confirmedWith_' + outpass_id).val();
+            if (!confirmedWith) {
+                alert("Please fill the 'Confirmed with' field before approving.");
+                return;
+            }
+
             $.ajax({
                 url: 'approve_FA.php',
                 method: 'POST',
-                data: { outpass_id: outpass_id },
+                data: { outpass_id: outpass_id, confirmed_with: confirmedWith },
                 success: function (response) {
                     console.log("Approve response:", response);
 
@@ -148,16 +155,22 @@
                     alert("Outpass approved successfully.");
                 },
                 error: function (xhr, status, error) {
-                    alert("Outpass approved successfully.");
+                    alert("Error approving outpass.");
                 }
             });
         }
 
         function declineOutpass(outpass_id) {
+            var confirmedWith = $('#confirmedWith_' + outpass_id).val();
+            if (!confirmedWith) {
+                alert("Please fill the 'Confirmed with' field before declining.");
+                return;
+            }
+
             $.ajax({
                 url: 'decline_FA.php',
                 method: 'POST',
-                data: { outpass_id: outpass_id },
+                data: { outpass_id: outpass_id, confirmed_with: confirmedWith },
                 success: function (response) {
                     console.log("Decline response:", response);
 
@@ -184,7 +197,6 @@
     </script>
 </head>
 
-<body class="nav-fixed" onload="updateDateTime()">
 <body class="nav-fixed" onload="updateDateTime()">
     <form id="userHomePage" name="userHomePage" method="post">
         <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
@@ -311,6 +323,7 @@
                                                         <th>Time (In)</th>
                                                         <th>Reason</th>
                                                         <th>Parents Number</th>
+                                                        <th>Confirmed with</th>
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
