@@ -4,10 +4,7 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$servername = "localhost";
-$username = "root"; // Your MySQL username
-$password = "";  // Your MySQL password
-$dbname = "srm_student_portal";
+include 'db.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -22,15 +19,16 @@ if (!isset($_SESSION['user_id'])) {
     die(json_encode(['error' => 'User not logged in']));
 }
 
-// Retrieve outpass_id from POST data
-if (!isset($_POST['outpass_id'])) {
-    die(json_encode(['error' => 'Outpass ID (outpass_id) not provided']));
+// Retrieve outpass_id and comment from POST data
+if (!isset($_POST['outpass_id']) || !isset($_POST['comment'])) {
+    die(json_encode(['error' => 'Outpass ID (outpass_id) or Comment (comment) not provided']));
 }
 
 $outpass_id = (int)$_POST['outpass_id'];
+$comment = $conn->real_escape_string($_POST['comment']);
 
-// SQL query to update the outpass status to 'approved'
-$sql = "UPDATE outpass SET status = 'FA' WHERE outpass_id = ? AND status = 'pending'";
+// SQL query to update the outpass status to 'approved' and save the comment field
+$sql = "UPDATE outpass SET status = 'FA', comment = ? WHERE outpass_id = ? AND status = 'pending'";
 
 $stmt = $conn->prepare($sql);
 
@@ -39,8 +37,8 @@ if (!$stmt) {
     die(json_encode(['error' => 'SQL Prepare failed: ' . $conn->error]));
 }
 
-// Bind the outpass_id to the prepared statement
-$stmt->bind_param("i", $outpass_id);
+// Bind the comment and outpass_id to the prepared statement
+$stmt->bind_param("si", $comment, $outpass_id);
 
 // Execute the statement
 if (!$stmt->execute()) {

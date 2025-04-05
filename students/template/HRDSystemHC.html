@@ -1,22 +1,21 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>SRM Faculty Portal</title>
+    <title>SRM Coordinator Portal</title>
     <link href="mainstyle.css" rel="stylesheet">
     <link href="all.css" rel="stylesheet" type="text/css">
     <link href="customstyle.css" rel="stylesheet">
     <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
     <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+    <script src="jquery.min.js"></script>
+    <script src="bootstrap.bundle.min.js"></script>
     <script src="jquery.easing.min.js"></script>
     <script src="main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
         function updateDateTime() {
@@ -39,192 +38,119 @@
 
         $(document).ready(function () {
             updateDateTime();
-            fetchOutpassByFA(); // Call to fetch outpass data
+            fetchHCDetails(); // Fetch HC details
+            fetchOutpassDetails(); // Fetch outpass details
         });
 
-        function fetchFADetails() {
-            var userId = $('#user_id').val(); // Get the user_id from the hidden input field
-
+        function fetchHCDetails() {
+            var userId = $('#user_id').val();
             $.ajax({
-                url: 'fetch_fa_details.php',
+                url: 'fetch_hc_details.php',
                 method: 'GET',
-                data: { fa_id: userId }, // Pass the user_id as fa_id
+                data: { hc_id: userId }, // Replace with the actual HC ID
                 success: function (data) {
-                    console.log("Fetched FA details:", data);
+                    console.log("Fetched HC details:", data);
 
                     if (data.error) {
                         alert("Error: " + data.error);
                         return;
                     }
 
-                    $('#facultyName').text(data.name);
-                    $('#emailId').text(data.email);
-                    $('#department').text(data.dept);
+                    $('#hcName').text(data.name);
+                    $('#hcEmailId').text(data.email);
+                    $('#hcDepartment').text(data.dept);
                 },
                 error: function (xhr, status, error) {
-                    alert("Error fetching FA details from the server.");
+                    alert("Error fetching HC details from the server.");
                 }
             });
         }
 
-        // Call this function when the document is ready
-        $(document).ready(function () {
-            fetchFADetails();
-        });
-
-        var outpassData = []; // Global variable to store fetched outpass data
-
-        function fetchOutpassByFA() {
+        function fetchOutpassDetails() {
             $.ajax({
-                url: 'fetch_outpass_by_fa.php',  // Your PHP endpoint
+                url: 'fetch_outpass_by_hc.php', // Ensure this is the correct path to your PHP file
                 method: 'GET',
                 success: function (data) {
-                    console.log("Fetched data:", data); // Log the raw response
+                    console.log("Fetched Outpass Details:", data);
 
                     if (data.error) {
                         alert("Error: " + data.error);
                         return;
                     }
 
-                    var outpasses;
-                    try {
-                        outpasses = Array.isArray(data) ? data : JSON.parse(data);
-                    } catch (e) {
-                        alert("Error parsing data.");
+                    // Populate the table with outpass data
+                    var tbody = $('#outpassTable tbody');
+                    tbody.empty(); // Clear existing rows
+                    if (data.message) {
+                        tbody.append('<tr><td colspan="10" class="text-center">' + data.message + '</td></tr>');
                         return;
                     }
 
-                    if (!Array.isArray(outpasses)) {
-                        return;
-                    }
-
-                    outpassData = outpasses; // Store the fetched data in the global variable
-                    console.log("Parsed data:", outpassData);
-
-                    var outpassTable = $('#outpassTable tbody');
-                    outpassTable.empty(); // Clear the table before appending new rows
-
-                    outpasses.forEach(function (outpass) {
-                        var row = '<tr>' +
-                            '<td>' + outpass.student_name + '</td>' +
-                            '<td>' + outpass.r_no + '</td>' +
-                            '<td>' + outpass.date_out + '</td>' +
-                            '<td>' + outpass.time_out + '</td>' +
-                            '<td>' + outpass.date_in + '</td>' +
-                            '<td>' + outpass.time_in + '</td>' +
-                            '<td><button class="btn btn-info btn-sm" onclick="viewDetails(' + outpass.outpass_id + ', event)">View Details</button></td>' +
-                            '<td>' + outpass.p_no + '</td>' +
-                            '<td><input type="text" class="form-control" id="confirmedWith_' + outpass.outpass_id + '"></td>' +
-                            '<td>' +
-                            '<button class="btn btn-success btn-sm" onclick="approveOutpass(' + outpass.outpass_id + ')">Approve</button>' +
-                            ' <button class="btn btn-danger btn-sm" onclick="declineOutpass(' + outpass.outpass_id + ')">Decline</button>' +
-                            '</td>' +
-                            '</tr>';
-                        outpassTable.append(row);
+                    data.forEach(function (outpass) {
+                        var row = `<tr>
+                            <td>${outpass.student_name}</td>
+                            <td>${outpass.faculty_name || 'N/A'}</td>
+                            <td>${outpass.comment || 'N/A'}</td>
+                            <td>${outpass.r_no}</td>
+                            <td>${outpass.date_out}</td>
+                            <td>${outpass.time_out}</td>
+                            <td>${outpass.date_in}</td>
+                            <td>${outpass.time_in}</td>
+                            <td>${outpass.reason}</td>
+                            <td>
+                                <button class="btn btn-success" onclick="approveOutpass(${outpass.outpass_id})">Approve</button>
+                                <button class="btn btn-danger" onclick="declineOutpass(${outpass.outpass_id})">Decline</button>
+                            </td>
+                        </tr>`;
+                        tbody.append(row);
                     });
                 },
                 error: function (xhr, status, error) {
-                    alert("Error fetching data from the server.");
+                    console.error("Error fetching outpass details:", error);
+                    alert("Error fetching outpass details from the server.");
                 }
             });
         }
 
-        function approveOutpass(outpass_id) {
-            var comment = $('#confirmedWith_' + outpass_id).val();
-            if (!comment) {
-                alert("Please fill the 'Comment' field before approving.");
-                return;
-            }
-
+        function approveOutpass(outpassId) {
             $.ajax({
-                url: 'approve_FA.php',
+                url: 'approve_decline_hc.php',
                 method: 'POST',
-                data: { outpass_id: outpass_id, comment: comment },
+                data: {
+                    outpass_id: outpassId,
+                    comment: '', // No comment required
+                    action: 'approve'
+                },
                 success: function (response) {
-                    console.log("Approve response:", response);
-
-                    try {
-                        response = JSON.parse(response);
-                        console.log("Parsed response:", response);
-                    } catch (e) {
-                        alert("Error parsing response.");
-                        return;
-                    }
-
-                    if (response.error) {
-                        alert("Error: " + response.error);
-                        return;
-                    }
-
-                    alert("Outpass approved successfully.");
+                    alert(response.message || "Outpass approved successfully!");
+                    fetchOutpassDetails(); // Refresh the table
                 },
                 error: function (xhr, status, error) {
-                    alert("Outpass approved successfully.");
+                    console.error("Error approving outpass:", error);
+                    alert("Error approving outpass.");
                 }
             });
         }
 
-        function declineOutpass(outpass_id) {
-            var comment = $('#confirmedWith_' + outpass_id).val();
-            if (!comment) {
-                alert("Please fill the 'Comment' field before declining.");
-                return;
-            }
-
+        function declineOutpass(outpassId) {
             $.ajax({
-                url: 'decline_FA.php',
+                url: 'approve_decline_hc.php',
                 method: 'POST',
-                data: { outpass_id: outpass_id, comment: comment },
+                data: {
+                    outpass_id: outpassId,
+                    comment: '', // No comment required
+                    action: 'decline'
+                },
                 success: function (response) {
-                    console.log("Decline response:", response);
-
-                    try {
-                        response = JSON.parse(response);
-                        console.log("Parsed response:", response);
-                    } catch (e) {
-                        alert("Error parsing response.");
-                        return;
-                    }
-
-                    if (response.error) {
-                        alert("Error: " + response.error);
-                        return;
-                    }
-
-                    alert("Outpass declined successfully.");
+                    alert(response.message || "Outpass declined successfully!");
+                    fetchOutpassDetails(); // Refresh the table
                 },
                 error: function (xhr, status, error) {
+                    console.error("Error declining outpass:", error);
                     alert("Error declining outpass.");
                 }
             });
         }
-
-        function viewDetails(outpass_id, event) {
-            if (event) {
-                event.preventDefault(); // Prevent the default action of the button click
-            }
-
-            console.log("View Details clicked for outpass:", outpass_id); // Debugging line
-
-            // Find the outpass details from the global variable
-            var outpass = outpassData.find(function (item) {
-                return item.outpass_id === outpass_id;
-            });
-
-            if (outpass) {
-                console.log("Found outpass details:", outpass); // Debugging line
-
-                var details = `
-                    <p><strong>Reason:</strong> ${outpass.reason_for_leave}</p>
-                    <p><strong>Address:</strong> ${outpass.address}</p>
-                `;
-                $('#detailsModalBody').html(details);
-                $('#detailsModal').modal('show');
-            } else {
-                alert("No details found for this outpass.");
-            }
-        }
-
     </script>
 </head>
 
@@ -234,7 +160,7 @@
             <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle"><i class="fa fa-bars"></i></button>
             <a class="navbar-brand" href="../../faculty/loginManager/UserHomePage.jsp">
                 <img src="../../resources/Image/srmist.png" alt="SRM Logo" />
-                <br><font style="font-size: 9pt;">Faculty Portal</font>
+                <br><font style="font-size: 9pt;">Coordinator Portal</font>
             </a>
             <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
 
@@ -253,23 +179,15 @@
                 <nav class="sidenav shadow-right sidenav-light">
                     <div class="sidenav-menu">
                         <div class="nav accordion" id="accordionSidenav">
-                            <!-- Sidenav Heading -->
-                            <!-- <div class="sidenav-menu-heading">Menus</div> -->
-
-                            <!-- Individual Menu Start -->
-                            <!-- Individual Menu End -->
-
+                            <!-- Removed Dashboard Link -->
                             <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
                                 <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
                                 Logout
                             </a>
                         </div>
                     </div>
-                    <!-- Sidenav Footer-->
                     <div class="sidenav-footer">
                         <div class="sidenav-footer-content">
-                            <div class="sidenav-footer-subtitle"></div>
-                            <div class="sidenav-footer-subtitle"></div>
                             <div class="sidenav-footer-title" id="currentDateTime"></div>
                         </div>
                         <input type="hidden" style="color:white;" id="hidchkHostelOpen" name="hidchkHostelOpen" size="10" value="''">
@@ -282,16 +200,16 @@
                         <div class="row justify-content-center">
                             <div class="col-md-8">
                                 <div class="card border-custom mb-2 mt-1">
-                                    <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Faculty Profile</div>
+                                    <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Coordinator Profile</div>
                                     <div class="card-body py-1">
                                         <table class="table table-borderless mb-0">
                                             <tbody>
                                                 <tr class="border-bottom">
                                                     <td style="width: 30%">
-                                                        Faculty Name
+                                                        Coordinator Name
                                                     </td>
                                                     <td>
-                                                        <div class="font-weight-bold font-weight-700 text-custom" id="facultyName"></div>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="hcName"></div>
                                                     </td>
                                                 </tr>
                                                 <tr class="border-bottom">
@@ -299,7 +217,7 @@
                                                         Email ID
                                                     </td>
                                                     <td>
-                                                        <div class="font-weight-bold font-weight-700 text-custom" id="emailId"></div>
+                                                        <div class="font-weight-bold font-weight-700 text-custom" id="hcEmailId"></div>
                                                     </td>
                                                 </tr>
                                                 <tr class="border-bottom">
@@ -310,14 +228,7 @@
                                                         <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
                                                     </td>
                                                 </tr>
-                                                <tr class="border-bottom">
-                                                    <td>
-                                                        Department
-                                                    </td>
-                                                    <td>
-                                                        <div class="font-weight-bold" id="department"></div>
-                                                    </td>
-                                                </tr>
+                                                
                                             </tbody>
                                         </table>
                                     </div>
@@ -327,7 +238,7 @@
                                 <div class="card border-custom mb-4">
                                     <div class="card-body text-center">
                                         <div id="divImage">
-                                            <img class="img-account-profile mb-2 imgPhoto" src="faculty_photo.jpg" alt="Faculty Photo" style="height: 150px;width:150px;">
+                                            <img class="img-account-profile mb-2 imgPhoto" src="hc_photo.jpg" alt="Coordinator Photo" style="height: 150px;width:150px;">
                                         </div>
                                         <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div>
                                         <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
@@ -347,14 +258,14 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Student Name</th>
+                                                        <th>Faculty Name</th>
+                                                        <th>Faculty comment</th>
                                                         <th>Register No.</th>
                                                         <th>Date (Out)</th>
                                                         <th>Time (Out)</th>
                                                         <th>Date (In)</th>
                                                         <th>Time (In)</th>
                                                         <th>Reason</th>
-                                                        <th>Parents Number</th>
-                                                        <th>Comments</th>
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -402,26 +313,6 @@
                 <div class="modal-footer">
                     <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
                     <a class="btn btn-custom lift" href="login.html">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Details Modal -->
-    <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="detailsModalLabel">Outpass Details</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="detailsModalBody">
-                    <!-- Details will be populated here by JavaScript -->
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

@@ -4,10 +4,7 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$servername = "localhost";
-$username = "root"; // Your MySQL username
-$password = "";  // Your MySQL password
-$dbname = "srm_student_portal";
+include 'db.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -29,7 +26,7 @@ $fa_id = (int)$_SESSION['user_id'];
 $sql = "SELECT o.*, s.name AS student_name, s.r_no,s.p_no
         FROM outpass o 
         JOIN student s ON o.s_id = s.id 
-        WHERE s.fa_id = ? and o.status = 'pending'";
+        WHERE s.fa_id = ? and o.status = 'pending' AND CONCAT(o.date_out, ' ', o.time_out) > NOW()";
 
 $stmt = $conn->prepare($sql);
 

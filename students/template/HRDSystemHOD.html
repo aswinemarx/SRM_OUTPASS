@@ -38,14 +38,13 @@
 
         $(document).ready(function () {
             updateDateTime();
-            fetchOutpassByFA(); // Call to fetch outpass data
+            fetchOutpassByHOD(); // Call to fetch outpass data
             fetchHODDetails(); // Call to fetch HOD details
         });
 
         function fetchHODDetails() {
             var userId = $('#user_id').val();
             $.ajax({
-                
                 url: 'fetch_hod_details.php',
                 method: 'GET',
                 data: { hod_id: userId }, // Replace with the actual HOD ID
@@ -67,7 +66,7 @@
             });
         }
 
-        function fetchOutpassByFA() {
+        function fetchOutpassByHOD() {
             $.ajax({
                 url: 'fetch_outpass_by_hod.php',  // Your PHP endpoint
                 method: 'GET',
@@ -99,6 +98,8 @@
                     outpasses.forEach(function (outpass) {
                         var row = '<tr>' +
                             '<td>' + outpass.student_name + '</td>' +
+                            '<td>' + outpass.faculty_name + '</td>' +
+                            '<td>' + outpass.comment + '</td>' +
                             '<td>' + outpass.r_no + '</td>' +
                             '<td>' + outpass.date_out + '</td>' +
                             '<td>' + outpass.time_out + '</td>' +
@@ -120,36 +121,35 @@
         }
 
         function approveOutpass(outpass_id) {
-    $.ajax({
-        url: 'approve_HOD.php',
-        method: 'POST',
-        data: { outpass_id: outpass_id },
-        success: function (response) {
-            console.log("Approve response:", response);
+            $.ajax({
+                url: 'approve_HOD.php',
+                method: 'POST',
+                data: { outpass_id: outpass_id },
+                success: function (response) {
+                    console.log("Approve response:", response);
 
-            try {
-                response = JSON.parse(response);
-                console.log("Parsed response:", response);
-            } catch (e) {
-                alert("Error parsing response.");
-                return;
-            }
+                    try {
+                        response = JSON.parse(response);
+                        console.log("Parsed response:", response);
+                    } catch (e) {
+                        alert("Error parsing response.");
+                        return;
+                    }
 
-            if (response.error) {
-                alert("Error: " + response.error);
-                return;
-            }
+                    if (response.error) {
+                        alert("Error: " + response.error);
+                        return;
+                    }
 
-            // Show success message when the outpass is approved successfully
-            alert("Outpass approved successfully.");
-        },
-        error: function (xhr, status, error) {
-            // If the request fails, show an error message
-            alert("Outpass approved successfully." + error);
+                    // Show success message when the outpass is approved successfully
+                    alert("Outpass approved successfully.");
+                },
+                error: function (xhr, status, error) {
+                    // If the request fails, show an error message
+                    alert("Outpass approved successfully." + error);
+                }
+            });
         }
-    });
-}
-
 
         function declineOutpass(outpass_id) {
             $.ajax({
@@ -172,10 +172,10 @@
                         return;
                     }
 
-
+                    alert("Outpass declined successfully.");
                 },
                 error: function (xhr, status, error) {
-                    alert("Outpass declined successfully.");
+                    alert("Error declining outpass.");
                 }
             });
         }

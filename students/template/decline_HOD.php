@@ -4,10 +4,7 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$servername = "localhost";
-$username = "root";  // Your MySQL username
-$password = "";  // Your MySQL password
-$dbname = "srm_student_portal";
+include 'db.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -30,7 +27,7 @@ if (!isset($_POST['outpass_id'])) {
 $outpass_id = (int)$_POST['outpass_id'];  // Cast to integer for security
 
 // SQL query to update the outpass status to 'declined'
-$sql = "UPDATE outpass SET status = 'denied' WHERE outpass_id = ? AND status = 'FA'";
+$sql = "UPDATE outpass SET status = 'denied' WHERE outpass_id = ? AND status = 'HC'";
 
 $stmt = $conn->prepare($sql);
 

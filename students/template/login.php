@@ -1,9 +1,6 @@
 <?php
 session_start();
-$servername = "localhost";
-$username = "root"; // Change this to your MySQL username
-$password = "";    // Change this to your MySQL password
-$dbname = "srm_student_portal";
+include 'db.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -17,7 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get the form data
     $login = $_POST['login'] . '@srmist.edu.in'; // Append '@srmist.edu.in' to the NetID
     $passwd = $_POST['passwd'];     // Password entered by the user
-    $userType = $_POST['userType']; // User type (student, fa, hod, warden)
+    $userType = $_POST['userType']; // User type (student, fa, hod, hc)
 
     // Prepare the SQL query to check for username and userType
     $stmt = $conn->prepare("SELECT id, password FROM users WHERE username = ? AND user_type = ?");
@@ -35,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Successful login
             $_SESSION['user_type'] = $userType;
 
-            // Now fetch the user ID from the respective table (student, fa, hod)
+            // Now fetch the user ID from the respective table (student, fa, hod, hc)
             if ($userType == 'student') {
                 // Fetch the student ID based on the email (login)
                 $stmt = $conn->prepare("SELECT id FROM student WHERE email = ?");
@@ -83,6 +80,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     exit();
                 } else {
                     $_SESSION['error'] = "No HOD found with the provided login.";
+                }
+            } else if ($userType == 'hc') {
+                // Fetch the HC ID based on the email (login)
+                $stmt = $conn->prepare("SELECT id FROM hc WHERE email = ?");
+                $stmt->bind_param("s", $login); // Use the login value here
+                $stmt->execute();
+                $stmt->store_result();
+
+                if ($stmt->num_rows > 0) {
+                    $stmt->bind_result($hc_id);
+                    $stmt->fetch();
+                    $_SESSION['user_id'] = $hc_id;
+                    header("Location: HRDSystemHC.html"); // Redirect to HRDSystemHC.html for HC
+                    exit();
+                } else {
+                    $_SESSION['error'] = "No HC found with the provided login.";
                 }
             }
         } else {

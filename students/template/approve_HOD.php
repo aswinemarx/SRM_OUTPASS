@@ -10,10 +10,7 @@ use PHPMailer\PHPMailer\Exception;
 // Include PHPMailer autoloader (adjust the path if you're using Composer)
 require 'vendor/autoload.php'; // Adjust this path
 
-$servername = "localhost";
-$username = "root"; // Your MySQL username
-$password = "";  // Your MySQL password
-$dbname = "srm_student_portal";
+include 'db.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -36,7 +33,7 @@ if (!isset($_POST['outpass_id'])) {
 $outpass_id = (int)$_POST['outpass_id'];
 
 // SQL query to update the outpass status to 'approved'
-$sql = "UPDATE outpass SET status = 'Approved' WHERE outpass_id = ? AND status = 'FA'";
+$sql = "UPDATE outpass SET status = 'Approved' WHERE outpass_id = ? AND status = 'HC'";
 
 $stmt = $conn->prepare($sql);
 
@@ -64,7 +61,9 @@ if ($stmt->affected_rows === 0) {
 error_log("Outpass approved successfully for outpass_id: " . $outpass_id);
 
 // Get the outpass details for sending the email
-$outpass_sql = "SELECT * FROM outpass,student WHERE outpass_id = ?";
+$outpass_sql = "SELECT outpass.*, student.* FROM outpass 
+                INNER JOIN student ON student.id = outpass.s_id 
+                WHERE outpass.outpass_id = ?";
 $outpass_stmt = $conn->prepare($outpass_sql);
 $outpass_stmt->bind_param("i", $outpass_id);
 $outpass_stmt->execute();
@@ -96,14 +95,22 @@ if ($outpass_result->num_rows > 0) {
         $message = "Dear Parent/Warden,\n\n";
         $message .= "We are pleased to inform you that the outpass request for " . $outpass['name'] . " has been approved.\n\n";
         $message .= "Here are the details of the outpass:\n";
-        $message .= "Name: " . $outpass['name'] . "\n";
-        $message .= "Register No: " . $outpass['r_number'] . "\n";
-        $message .= "Hostel: " . $outpass['hostel'] . "\n";
-        $message .= "Room Number: " . $outpass['room_number'] . "\n";
-        $message .= "Date Time (Out): " . $outpass['date_out'] . " " . $outpass['time_out'] . "\n";
-        $message .= "Date Time (In): " . $outpass['date_in'] . " " . $outpass['time_in'] . "\n";
-        $message .= "Reason: " . $outpass['reason_for_leave'] . "\n\n";
-        $message .= "Regards,\nSRM Hostel Portal";
+        $message .= "Student Name: " . $outpass['name'] . "\n";
+        $message .= "Register Number: " . $outpass['r_no'] . "\n";
+        $message .= "Hostel Name: " . $outpass['hostel'] . "\n";
+        $message .= "Student's Contact Number: " . $outpass['s_no'] . "\n";
+        $message .= "Out Time: " . $outpass['date_out'] . " " . $outpass['time_out'] . "\n";
+        $message .= "In Time: " . $outpass['date_in'] . " " . $outpass['time_in'] . "\n";
+        $message .= "Address (for temporary stay): " . $outpass['address'] . "\n";
+        $message .= "Reason for Temporary Stay: " . $outpass['reason_for_leave'] . "\n\n";
+        $message .= "Should you have any concerns or need further clarification, please feel free to contact us at [College's Contact Number] or email us at [College's Email].\n\n";
+        $message .= "Thank you for your understanding and cooperation.\n\n";
+        $message .= "Best regards,\n";
+        $message .= "[Your Full Name]\n";
+        $message .= "[Your Position]\n";
+        $message .= "[College Name]\n";
+        $message .= "[Contact Information]";
+
 
         $mail->Body = $message;
 

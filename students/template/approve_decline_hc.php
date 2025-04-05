@@ -19,16 +19,23 @@ if (!isset($_SESSION['user_id'])) {
     die(json_encode(['error' => 'User not logged in']));
 }
 
-// Retrieve outpass_id and comment from POST data
-if (!isset($_POST['outpass_id']) || !isset($_POST['comment'])) {
-    die(json_encode(['error' => 'Outpass ID (outpass_id) or Comment (comment) not provided']));
+// Retrieve outpass_id and action from POST data
+if (!isset($_POST['outpass_id']) || !isset($_POST['action'])) {
+    die(json_encode(['error' => 'Outpass ID (outpass_id) or Action (action) not provided']));
 }
 
 $outpass_id = (int)$_POST['outpass_id'];
-$comment = $conn->real_escape_string($_POST['comment']);
+$action = $_POST['action'];
 
-// SQL query to update the outpass status to 'denied' and save the comment field
-$sql = "UPDATE outpass SET status = 'denied', comment = ? WHERE outpass_id = ? AND status = 'pending'";
+// Determine the status based on the action
+$status = ($action === 'approve') ? 'HC' : (($action === 'decline') ? 'denied' : null);
+
+if (!$status) {
+    die(json_encode(['error' => 'Invalid action']));
+}
+
+// SQL query to update only the outpass status
+$sql = "UPDATE outpass SET status = ? WHERE outpass_id = ? AND status = 'FA'";
 
 $stmt = $conn->prepare($sql);
 
@@ -37,8 +44,8 @@ if (!$stmt) {
     die(json_encode(['error' => 'SQL Prepare failed: ' . $conn->error]));
 }
 
-// Bind the comment and outpass_id to the prepared statement
-$stmt->bind_param("si", $comment, $outpass_id);
+// Bind the status and outpass_id to the prepared statement
+$stmt->bind_param("si", $status, $outpass_id);
 
 // Execute the statement
 if (!$stmt->execute()) {
@@ -47,12 +54,12 @@ if (!$stmt->execute()) {
 
 // Check if the update was successful
 if ($stmt->affected_rows === 0) {
-    die(json_encode(['error' => 'No rows updated. Outpass ID (outpass_id) may be incorrect or already denied.']));
+    die(json_encode(['error' => 'No rows updated. Outpass ID (outpass_id) may be incorrect or already processed.']));
 }
 
 // Log success message
-error_log("Outpass denied successfully for outpass_id: " . $outpass_id);
+error_log("Outpass $action successfully for outpass_id: " . $outpass_id);
 
 // Return a success message
-echo json_encode(['message' => 'Outpass denied successfully']);
+echo json_encode(['message' => "Outpass $action successfully"]);
 ?>

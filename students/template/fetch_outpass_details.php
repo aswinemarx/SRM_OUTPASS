@@ -19,15 +19,17 @@ if (!isset($_SESSION['user_id'])) {
     die(json_encode(['error' => 'User not logged in']));
 }
 
-// Retrieve HOD ID from the session and ensure it's an integer
-$hod_id = (int)$_SESSION['user_id']; 
+// Retrieve outpass ID from the GET request and ensure it's an integer
+$outpass_id = isset($_GET['outpass_id']) ? (int)$_GET['outpass_id'] : 0;
 
-// SQL query to fetch outpass data for the HOD's department with status 'pending' and datetime (out) greater than present datetime
-$sql = "SELECT o.*, s.name AS student_name, s.r_no, f.name AS faculty_name, o.comment 
+if ($outpass_id <= 0) {
+    die(json_encode(['error' => 'Invalid outpass ID']));
+}
+
+// SQL query to fetch outpass details
+$sql = "SELECT o.reason_for_leave, o.address
         FROM outpass o 
-        JOIN student s ON o.s_id = s.id 
-        JOIN fa f ON s.fa_id = f.id
-        WHERE s.hod_id = ? AND o.status = 'HC' AND CONCAT(o.date_out, ' ', o.time_out) > NOW()";
+        WHERE o.id = ?";
 
 $stmt = $conn->prepare($sql);
 
@@ -36,8 +38,8 @@ if (!$stmt) {
     die(json_encode(['error' => 'SQL Prepare failed: ' . $conn->error]));
 }
 
-// Bind the HOD ID to the prepared statement
-$stmt->bind_param("i", $hod_id);
+// Bind the outpass ID to the prepared statement
+$stmt->bind_param("i", $outpass_id);
 
 // Execute the statement
 if (!$stmt->execute()) {
@@ -48,19 +50,14 @@ $result = $stmt->get_result();
 
 // Check if any rows were fetched
 if ($result->num_rows > 0) {
-    $outpasses = [];
-    
-    // Fetch the rows and add them to the outpasses array
-    while ($row = $result->fetch_assoc()) {
-        $outpasses[] = $row;
-    }
+    $outpass = $result->fetch_assoc();
 
-    // Return the outpass data as a JSON response
+    // Return the outpass details as a JSON response
     header('Content-Type: application/json');
-    echo json_encode($outpasses);
+    echo json_encode($outpass);
 } else {
     // If no records are found, return a message indicating this
-    echo json_encode(['message' => 'No outpass records found']);
+    echo json_encode(['message' => 'No details found for this outpass']);
 }
 
 // Close the prepared statement and database connection

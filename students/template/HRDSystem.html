@@ -48,7 +48,7 @@
                 method: 'GET',
                 success: function (data) {
                     var outpass = JSON.parse(data);
-                fetchStudentDetails();
+                    fetchStudentDetails();
                     if (outpass) {
                         var now = new Date();
                         var dateIn = new Date(outpass.date_in + 'T' + outpass.time_in);  // Combine date and time
@@ -72,7 +72,13 @@
                             $('#outpassForm').hide();
                             $('#outpassStatus').show();
                             $('#outpassStatusText').text('Outpass Status: Approved by FA');
-                        } else {
+                        } 
+                        else if (outpass.status === 'HC' && dateOut > now) {
+                            $('#outpassForm').hide();
+                            $('#outpassStatus').show();
+                            $('#outpassStatusText').text('Outpass Status: Approved by HC');
+                        }
+                        else {
                             $('#outpassForm').show();
                             $('#outpassStatus').hide();
                         }
@@ -129,7 +135,7 @@
             // Create an array of key-value pairs in the desired order
             var qrDataArray = [
                 ["NAME", outpass.name],
-                ["REGISTER NO", outpass.register_number],
+                ["REGISTER NO", outpass.r_no],
                 ["HOSTEL", outpass.hostel],
                 ["ROOM NUMBER", outpass.room_number],
                 ["DATE TIME (OUT)", formatDate(outpass.date_out) + " " + outpass.time_out],
@@ -214,6 +220,7 @@
                 toDate: $('#toDate').val(),
                 toTime: $('#toTime').val(),
                 reason: $('#reason').val(),
+                addressType: addressType, // Include the addressType field
                 address: address // Include the address field
             };
 
@@ -251,7 +258,7 @@
                     success: function (data) {
                         var homeAddress = JSON.parse(data).address;
                         addressInput.value = homeAddress;
-                        addressInputGroup.style.display = 'none';
+                        addressInputGroup.style.display = 'none'; // Hide the address input group
                     },
                     error: function (xhr, status, error) {
                         console.error("Error fetching home address:", error);
@@ -259,9 +266,9 @@
                 });
             } else if (addressType === 'other') {
                 addressInput.value = '';
-                addressInputGroup.style.display = 'block';
+                addressInputGroup.style.display = 'block'; // Show the address input group
             } else {
-                addressInputGroup.style.display = 'none';
+                addressInputGroup.style.display = 'none'; // Hide the address input group
             }
         }
     </script>

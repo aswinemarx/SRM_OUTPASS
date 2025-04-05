@@ -2,10 +2,7 @@
 session_start();
 
 // Database connection details
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "srm_student_portal";
+include 'db.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

@@ -1,9 +1,6 @@
 <?php
 session_start();
-$servername = "localhost";
-$username = "root"; // Change this to your MySQL username
-$password = ""; // Change this to your MySQL password
-$dbname = "srm_student_portal";
+include 'db.php';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -15,9 +12,15 @@ if ($conn->connect_error) {
 
 $s_id = $_SESSION['user_id']; // Get the student ID from the session
 
-$sql = "SELECT * FROM outpass,student WHERE s_id = ? ORDER BY outpass_id DESC LIMIT 1";
+// Correct SQL query with INNER JOIN
+$sql = "SELECT outpass.*, student.* FROM outpass 
+        INNER JOIN student ON student.id = outpass.s_id 
+        WHERE student.id = ? 
+        ORDER BY outpass.outpass_id DESC 
+        LIMIT 1";
+
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $s_id);
+$stmt->bind_param("i", $s_id); // Bind the student ID parameter
 $stmt->execute();
 $result = $stmt->get_result();
 
