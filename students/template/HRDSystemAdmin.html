@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Admin Dashboard</title>
+    <link href="mainstyle.css" rel="stylesheet">
+    <link href="all.css" rel="stylesheet" type="text/css">
+    <link href="customstyle.css" rel="stylesheet">
+    <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
+    <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
+    <script src="jquery.easing.min.js"></script>
+    <script src="main.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            fetchDepartments();
+
+            $('#generateReportButton').click(function () {
+                generateReport();
+            });
+        });
+
+        function updateDateTime() {
+            var now = new Date();
+            var options = {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-GB', options).replace(',', '');
+        }
+
+        setInterval(updateDateTime, 1000);
+
+        function fetchAllUsers() {
+            $.ajax({
+                url: 'fetch_all_users.php',
+                method: 'GET',
+                success: function (data) {
+                    var users = JSON.parse(data);
+                    var userTable = $('#userTable tbody');
+                    userTable.empty();
+                    users.forEach(function (user) {
+                        var row = `<tr>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${user.role}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="editUser(${user.id})">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Delete</button>
+                            </td>
+                        </tr>`;
+                        userTable.append(row);
+                    });
+                },
+                error: function () {
+                    alert("Error fetching users.");
+                }
+            });
+        }
+
+        function fetchPendingOutpasses() {
+            $.ajax({
+                url: 'fetch_pending_outpasses.php',
+                method: 'GET',
+                success: function (data) {
+                    var outpasses = JSON.parse(data);
+                    var outpassTable = $('#outpassTable tbody');
+                    outpassTable.empty();
+                    outpasses.forEach(function (outpass) {
+                        var row = `<tr>
+                            <td>${outpass.student_name}</td>
+                            <td>${outpass.reason}</td>
+                            <td>${outpass.date_out}</td>
+                            <td>${outpass.date_in}</td>
+                            <td>
+                                <button class="btn btn-success btn-sm" onclick="approveOutpass(${outpass.id})">Approve</button>
+                                <button class="btn btn-danger btn-sm" onclick="rejectOutpass(${outpass.id})">Reject</button>
+                            </td>
+                        </tr>`;
+                        outpassTable.append(row);
+                    });
+                },
+                error: function () {
+                    alert("Error fetching outpasses.");
+                }
+            });
+        }
+
+        function fetchSystemStats() {
+            $.ajax({
+                url: 'fetch_system_stats.php',
+                method: 'GET',
+                success: function (data) {
+                    var stats = JSON.parse(data);
+                    $('#totalUsers').text(stats.total_users);
+                    $('#pendingOutpasses').text(stats.pending_outpasses);
+                    $('#approvedOutpasses').text(stats.approved_outpasses);
+                },
+                error: function () {
+                    alert("Error fetching system stats.");
+                }
+            });
+        }
+
+        function fetchDepartments() {
+            $.ajax({
+                url: 'fetch_departments.php',
+                method: 'GET',
+                success: function (data) {
+                    var departments = JSON.parse(data);
+                    var departmentDropdown = $('#department');
+                    departmentDropdown.empty().append('<option value="">Select Department</option>');
+                    departments.forEach(function (dept) {
+                        departmentDropdown.append('<option value="' + dept.id + '">' + dept.name + '</option>');
+                    });
+                },
+                error: function () {
+                    alert("Error fetching departments.");
+                }
+            });
+        }
+
+        function fetchYearsAndSections() {
+            var departmentId = $('#department').val();
+            if (!departmentId) return;
+
+            $.ajax({
+                url: 'fetch_years.php',
+                method: 'GET',
+                data: { department_id: departmentId },
+                success: function (data) {
+                    var years = JSON.parse(data);
+                    var yearDropdown = $('#year');
+                    yearDropdown.empty().append('<option value="">Select Year</option>');
+                    years.forEach(function (year) {
+                        yearDropdown.append('<option value="' + year + '">' + year + '</option>');
+                    });
+
+                    // Clear sections dropdown
+                    $('#section').empty().append('<option value="">Select Section</option>');
+                },
+                error: function () {
+                    alert("Error fetching years.");
+                }
+            });
+        }
+
+        function fetchSections() {
+            var departmentId = $('#department').val();
+            var year = $('#year').val();
+            if (!departmentId || !year) return;
+
+            $.ajax({
+                url: 'fetch_sections.php', // PHP file to fetch sections based on department and year
+                method: 'GET',
+                data: { department_id: departmentId, year: year },
+                success: function (data) {
+                    var sections = JSON.parse(data);
+                    var sectionDropdown = $('#section');
+                    sectionDropdown.empty().append('<option value="">Select Section</option>');
+                    sections.forEach(function (section) {
+                        sectionDropdown.append('<option value="' + section + '">' + section + '</option>');
+                    });
+                },
+                error: function () {
+                    alert("Error fetching sections.");
+                }
+            });
+        }
+
+        function generateReport() {
+            var fromDate = $('#fromDate').val();
+            var toDate = $('#toDate').val();
+            var department = $('#department').val();
+            var year = $('#year').val();
+            var section = $('#section').val();
+            var registerNumber = $('#registerNumber').val();
+
+            if (!fromDate || !toDate) {
+                alert("Please select both From and To dates.");
+                return;
+            }
+
+            var requestData = {
+                fromDate: fromDate,
+                toDate: toDate,
+                department: department,
+                year: year,
+                section: section,
+                registerNumber: registerNumber
+            };
+
+            $.ajax({
+                url: 'generate_report.php',
+                method: 'POST',
+                data: requestData,
+                success: function (data) {
+                    var reportData = JSON.parse(data);
+                    var reportTable = $('#reportTable tbody');
+                    reportTable.empty();
+                    reportData.forEach(function (record) {
+                        var row = `<tr>
+                            <td>${record.register_number}</td>
+                            <td>${record.name}</td>
+                            <td>${record.department}</td>
+                            <td>${record.year}</td>
+                            <td>${record.section}</td>
+                            <td>${record.date_out}</td>
+                            <td>${record.date_in}</td>
+                            <td>${record.reason_for_leave}</td>
+                        </tr>`;
+                        reportTable.append(row);
+                    });
+                },
+                error: function () {
+                    alert("Error generating report.");
+                }
+            });
+        }
+
+        function editUser(userId) {
+            alert(`Edit user functionality for user ID: ${userId}`);
+        }
+
+        function deleteUser(userId) {
+            if (confirm("Are you sure you want to delete this user?")) {
+                $.ajax({
+                    url: 'delete_user.php',
+                    method: 'POST',
+                    data: { id: userId },
+                    success: function () {
+                        alert("User deleted successfully.");
+                        fetchAllUsers();
+                    },
+                    error: function () {
+                        alert("Error deleting user.");
+                    }
+                });
+            }
+        }
+
+        function approveOutpass(outpassId) {
+            $.ajax({
+                url: 'approve_outpass.php',
+                method: 'POST',
+                data: { id: outpassId },
+                success: function () {
+                    alert("Outpass approved successfully.");
+                    fetchPendingOutpasses();
+                },
+                error: function () {
+                    alert("Error approving outpass.");
+                }
+            });
+        }
+
+        function rejectOutpass(outpassId) {
+            $.ajax({
+                url: 'reject_outpass.php',
+                method: 'POST',
+                data: { id: outpassId },
+                success: function () {
+                    alert("Outpass rejected successfully.");
+                    fetchPendingOutpasses();
+                },
+                error: function () {
+                    alert("Error rejecting outpass.");
+                }
+            });
+        }
+    </script>
+</head>
+
+<body class="nav-fixed" onload="updateDateTime()">
+    <form id="adminPortal" name="adminPortal" method="post">
+        <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
+            <a class="navbar-brand" href="#">
+                <img src="../../resources/Image/srmist.png" alt="SRM Logo" />
+                <br><font style="font-size: 9pt;">Admin Portal</font>
+            </a>
+            <span class="text-custom d-none d-sm-block"><b>SRM Admin Dashboard</b></span>
+        </nav>
+
+        <div id="layoutSidenav">
+            <div id="layoutSidenav_nav">
+                <nav class="sidenav shadow-right sidenav-light">
+                    <div class="sidenav-menu">
+                        <a class="nav-link" href="#userManagement">Manage Users</a>
+                        <a class="nav-link" href="#outpassManagement">Manage Outpasses</a>
+                        <a class="nav-link" href="#systemStats">System Stats</a>
+                        <a class="nav-link" href="#generateReport">Generate Report</a>
+                        <a class="nav-link" data-toggle="modal" data-target="#logoutModal">Logout</a>
+                    </div>
+                </nav>
+            </div>
+            <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid">
+                        <h1 class="mt-4">Admin Dashboard</h1>
+
+                        <!-- System Stats -->
+                        <div id="systemStats" class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Total Users</h5>
+                                        <p id="totalUsers">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Pending Outpasses</h5>
+                                        <p id="pendingOutpasses">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Approved Outpasses</h5>
+                                        <p id="approvedOutpasses">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Management -->
+                        <div id="userManagement" class="card mb-4">
+                            <div class="card-header">Manage Users</div>
+                            <div class="card-body">
+                                <table class="table table-bordered" id="userTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- User data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Outpass Management -->
+                        <div id="outpassManagement" class="card mb-4">
+                            <div class="card-header">Manage Outpasses</div>
+                            <div class="card-body">
+                                <table class="table table-bordered" id="outpassTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Student Name</th>
+                                            <th>Reason</th>
+                                            <th>Date Out</th>
+                                            <th>Date In</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Outpass data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Generate Report -->
+                        <div id="generateReport" class="card mb-4">
+                            <div class="card-header">Generate Report</div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="fromDate">From Date:</label>
+                                    <input type="date" id="fromDate" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="toDate">To Date:</label>
+                                    <input type="date" id="toDate" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="department">Department:</label>
+                                    <select id="department" class="form-control" onchange="fetchYearsAndSections()">
+                                        <option value="">Select Department</option>
+                                        <!-- Departments will be dynamically populated -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="year">Year:</label>
+                                    <select id="year" class="form-control" onchange="fetchSections()">
+                                        <option value="">Select Year</option>
+                                        <!-- Years will be dynamically populated -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="section">Section:</label>
+                                    <select id="section" class="form-control">
+                                        <option value="">Select Section</option>
+                                        <!-- Sections will be dynamically populated -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="registerNumber">Student Register Number:</label>
+                                    <input type="text" id="registerNumber" class="form-control" placeholder="Enter Register Number">
+                                </div>
+                                <button id="generateReportButton" class="btn btn-primary">Generate Report</button>
+
+                                <h3 class="mt-4">Report</h3>
+                                <table class="table table-bordered" id="reportTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Register Number</th>
+                                            <th>Name</th>
+                                            <th>Department</th>
+                                            <th>Year</th>
+                                            <th>Section</th>
+                                            <th>Date Out</th>
+                                            <th>Date In</th>
+                                            <th>Reason</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Report data will be dynamically populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </form>
+
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Are you sure you want to logout?</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-primary" href="login.html">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
