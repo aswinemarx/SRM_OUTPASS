@@ -258,7 +258,7 @@
                 data: { id: outpassId },
                 success: function () {
                     alert("Outpass approved successfully.");
-                    fetchPendingOutpasses();
+                    fetchPendingOutpasses(); // Refresh the table
                 },
                 error: function () {
                     alert("Error approving outpass.");
@@ -273,7 +273,7 @@
                 data: { id: outpassId },
                 success: function () {
                     alert("Outpass rejected successfully.");
-                    fetchPendingOutpasses();
+                    fetchPendingOutpasses(); // Refresh the table
                 },
                 error: function () {
                     alert("Error rejecting outpass.");
@@ -297,10 +297,9 @@
             <div id="layoutSidenav_nav">
                 <nav class="sidenav shadow-right sidenav-light">
                     <div class="sidenav-menu">
-                        <a class="nav-link" href="#userManagement">Manage Users</a>
-                        <a class="nav-link" href="#outpassManagement">Manage Outpasses</a>
+                        <a class="nav-link" href="manage_users.html">Manage Users</a>
+                        <a class="nav-link" href="generate_report.html">Generate Report</a>
                         <a class="nav-link" href="#systemStats">System Stats</a>
-                        <a class="nav-link" href="#generateReport">Generate Report</a>
                         <a class="nav-link" data-toggle="modal" data-target="#logoutModal">Logout</a>
                     </div>
                 </nav>
@@ -338,26 +337,6 @@
                             </div>
                         </div>
 
-                        <!-- User Management -->
-                        <div id="userManagement" class="card mb-4">
-                            <div class="card-header">Manage Users</div>
-                            <div class="card-body">
-                                <table class="table table-bordered" id="userTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- User data will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
                         <!-- Outpass Management -->
                         <div id="outpassManagement" class="card mb-4">
                             <div class="card-header">Manage Outpasses</div>
@@ -373,67 +352,18 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <!-- Outpass data will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Generate Report -->
-                        <div id="generateReport" class="card mb-4">
-                            <div class="card-header">Generate Report</div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label for="fromDate">From Date:</label>
-                                    <input type="date" id="fromDate" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="toDate">To Date:</label>
-                                    <input type="date" id="toDate" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="department">Department:</label>
-                                    <select id="department" class="form-control" onchange="fetchYearsAndSections()">
-                                        <option value="">Select Department</option>
-                                        <!-- Departments will be dynamically populated -->
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="year">Year:</label>
-                                    <select id="year" class="form-control" onchange="fetchSections()">
-                                        <option value="">Select Year</option>
-                                        <!-- Years will be dynamically populated -->
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="section">Section:</label>
-                                    <select id="section" class="form-control">
-                                        <option value="">Select Section</option>
-                                        <!-- Sections will be dynamically populated -->
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="registerNumber">Student Register Number:</label>
-                                    <input type="text" id="registerNumber" class="form-control" placeholder="Enter Register Number">
-                                </div>
-                                <button id="generateReportButton" class="btn btn-primary">Generate Report</button>
-
-                                <h3 class="mt-4">Report</h3>
-                                <table class="table table-bordered" id="reportTable">
-                                    <thead>
+                                        <!-- Example row with Accept and Decline buttons -->
                                         <tr>
-                                            <th>Register Number</th>
-                                            <th>Name</th>
-                                            <th>Department</th>
-                                            <th>Year</th>
-                                            <th>Section</th>
-                                            <th>Date Out</th>
-                                            <th>Date In</th>
-                                            <th>Reason</th>
+                                            <td>John Doe</td>
+                                            <td>Medical Emergency</td>
+                                            <td>2025-04-08</td>
+                                            <td>2025-04-10</td>
+                                            <td>
+                                                <button class="btn btn-success btn-sm" onclick="approveOutpass(1)">Accept</button>
+                                                <button class="btn btn-danger btn-sm" onclick="rejectOutpass(1)">Decline</button>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Report data will be dynamically populated here -->
+                                        <!-- Dynamic rows will be populated here -->
                                     </tbody>
                                 </table>
                             </div>
