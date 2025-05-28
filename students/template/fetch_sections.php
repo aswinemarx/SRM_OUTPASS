@@ -5,7 +5,7 @@ include 'db.php';
 $department_id = $_GET['department_id'];
 $year = $_GET['year'];
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli($host, $username, $password, $dbname);
 
 if ($conn->connect_error) {
     die(json_encode(['error' => 'Connection failed: ' . $conn->connect_error]));

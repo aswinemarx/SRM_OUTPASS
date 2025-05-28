@@ -10,165 +10,113 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
-            // Show or hide filter options based on user type
+            // Show/hide student filters
             $('#userType').change(function () {
                 const userType = $(this).val();
                 if (userType === 'student') {
                     $('#studentFilters').show();
-                    $('#facultyFilters').hide();
-                } else if (userType === 'faculty') {
+                    $('#faFilters').hide();
+                    fetchStudentFilterOptions();
+                } else if (userType === 'fa') {
                     $('#studentFilters').hide();
-                    $('#facultyFilters').show();
+                    $('#faFilters').show();
                 } else {
                     $('#studentFilters').hide();
-                    $('#facultyFilters').hide();
+                    $('#faFilters').hide();
+                    fetchUsers(); // fetch for hod/hc
                 }
             });
 
-            // Fetch and display user details based on filters
-            $('#applyFilterButton').click(function () {
-                const userType = $('#userType').val();
-                let filterData = {};
+            // Fetch users when student filter is applied
+            $('#applyStudentFilter').click(function () {
+                fetchUsers();
+            });
 
-                if (userType === 'student') {
-                    filterData = {
-                        userType: 'student',
-                        department: $('#studentDepartment').val(),
-                        year: $('#studentYear').val(),
-                        section: $('#studentSection').val()
-                    };
-                } else if (userType === 'faculty') {
-                    filterData = {
-                        userType: 'faculty',
-                        department: $('#facultyDepartment').val(),
-                        position: $('#facultyPosition').val()
-                    };
+            // Fetch users when fa filter is applied
+            $('#applyFaFilter').click(function () {
+                fetchUsers();
+            });
+
+            function fetchStudentFilterOptions() {
+                $.ajax({
+                    url: 'fetch_student_filter_options.php',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        // Populate department dropdown
+                        const deptSelect = $('#studentDept');
+                        deptSelect.empty().append('<option value="">All Departments</option>');
+                        data.departments.forEach(function (dept) {
+                            deptSelect.append(`<option value="${dept}">${dept}</option>`);
+                        });
+
+                        // Populate year dropdown
+                        const yearSelect = $('#studentYear');
+                        yearSelect.empty().append('<option value="">All Years</option>');
+                        data.years.forEach(function (year) {
+                            yearSelect.append(`<option value="${year}">${year}</option>`);
+                        });
+
+                        // Populate section dropdown
+                        const sectionSelect = $('#studentSection');
+                        sectionSelect.empty().append('<option value="">All Sections</option>');
+                        data.sections.forEach(function (section) {
+                            sectionSelect.append(`<option value="${section}">${section}</option>`);
+                        });
+                    }
+                });
+            }
+
+            function fetchUsers() {
+                const userType = $('#userType').val();
+                if (!userType) {
+                    $('#userTable tbody').empty();
+                    return;
                 }
 
-                // Fetch user details via AJAX
+                let data = { userType: userType };
+                if (userType === 'student') {
+                    data.dept = $('#studentDept').val();
+                    data.year = $('#studentYear').val();
+                    data.section = $('#studentSection').val();
+                    data.name = $('#studentName').val();
+                }
+                if (userType === 'fa') {
+                    data.name = $('#faName').val();
+                }
+
                 $.ajax({
-                    url: 'fetch_filtered_users.php',
+                    url: 'fetch_user_details.php',
                     method: 'POST',
-                    data: filterData,
+                    data: data,
                     success: function (data) {
-                        const users = JSON.parse(data);
+                        let users = [];
+                        try {
+                            users = JSON.parse(data);
+                        } catch (e) {
+                            users = [];
+                        }
                         const userTable = $('#userTable tbody');
                         userTable.empty();
 
-                        if (users.length > 0) {
+                        if (Array.isArray(users) && users.length > 0) {
                             users.forEach(function (user) {
                                 const row = `<tr>
                                     <td>${user.name}</td>
                                     <td>${user.email}</td>
-                                    <td>${user.role}</td>
-                                    <td><button class="btn btn-primary editUserButton" data-id="${user.id}" data-user-type="${userType}">Edit</button></td>
+                                    <td>${user.department || user.role || ''}</td>
                                 </tr>`;
                                 userTable.append(row);
                             });
-
-                            // Attach click event to Edit buttons
-                            $('.editUserButton').click(function () {
-                                const userId = $(this).data('id');
-                                const userType = $(this).data('user-type');
-
-                                // Fetch user details and populate the modal
-                                $.ajax({
-                                    url: 'fetch_user_details.php',
-                                    method: 'POST',
-                                    data: { id: userId, userType: userType },
-                                    success: function (data) {
-                                        const user = JSON.parse(data);
-                                        $('#editUserId').val(user.id);
-                                        $('#editUserName').val(user.name);
-                                        $('#editUserEmail').val(user.email);
-                                        $('#editUserRole').val(user.role);
-                                        $('#editUserModal').modal('show');
-                                    },
-                                    error: function () {
-                                        alert('Error fetching user details.');
-                                    }
-                                });
-                            });
                         } else {
-                            userTable.append('<tr><td colspan="4">No users found</td></tr>');
+                            userTable.append('<tr><td colspan="3">No users found</td></tr>');
                         }
                     },
                     error: function () {
                         alert('Error fetching user details.');
                     }
                 });
-            });
-
-            // Save edited user details
-            $('#saveUserButton').click(function () {
-                const userData = {
-                    id: $('#editUserId').val(),
-                    name: $('#editUserName').val(),
-                    email: $('#editUserEmail').val(),
-                    role: $('#editUserRole').val()
-                };
-
-                $.ajax({
-                    url: 'update_user_details.php',
-                    method: 'POST',
-                    data: userData,
-                    success: function (response) {
-                        alert(response.message);
-                        $('#editUserModal').modal('hide');
-                        $('#applyFilterButton').click(); // Refresh the table
-                    },
-                    error: function () {
-                        alert('Error updating user details.');
-                    }
-                });
-            });
-
-            // Add User Button Click
-            $('#saveNewUserButton').click(function () {
-                const userData = {
-                    userType: $('#addUserType').val(),
-                    name: $('#addUserName').val(),
-                    email: $('#addUserEmail').val(),
-                    role: $('#addUserRole').val(),
-                    department: $('#addUserDepartment').val()
-                };
-
-                $.ajax({
-                    url: 'add_user.php',
-                    method: 'POST',
-                    data: userData,
-                    success: function (response) {
-                        alert(response.message);
-                        $('#addUserModal').modal('hide');
-                        $('#applyFilterButton').click(); // Refresh the table
-                    },
-                    error: function () {
-                        alert('Error adding user.');
-                    }
-                });
-            });
-
-            // Upload CSV Button Click
-            $('#uploadCsvButton').click(function () {
-                const formData = new FormData();
-                formData.append('csvFile', $('#csvFile')[0].files[0]);
-
-                $.ajax({
-                    url: 'upload_csv.php',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        alert(response.message);
-                        $('#addUserModal').modal('hide');
-                        $('#applyFilterButton').click(); // Refresh the table
-                    },
-                    error: function () {
-                        alert('Error uploading CSV.');
-                    }
-                });
-            });
+            }
         });
     </script>
 </head>
@@ -200,113 +148,60 @@
                     <div class="container">
                         <h1 class="mt-4">Manage Users</h1>
 
-                        <!-- Add User Button -->
-                        <div class="mb-3">
-                            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addUserModal">Add User</button>
-                        </div>
-
-                        <!-- Add User Modal -->
-                        <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="addUserModalLabel">Add User</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <!-- Form to Add User -->
-                                        <form id="addUserForm">
-                                            <div class="form-group">
-                                                <label for="addUserType">User Type:</label>
-                                                <select id="addUserType" class="form-control" required>
-                                                    <option value="">Select User Type</option>
-                                                    <option value="student">Student</option>
-                                                    <option value="faculty">Faculty</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="addUserName">Name:</label>
-                                                <input type="text" id="addUserName" class="form-control" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="addUserEmail">Email:</label>
-                                                <input type="email" id="addUserEmail" class="form-control" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="addUserRole">Role/Position:</label>
-                                                <input type="text" id="addUserRole" class="form-control" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="addUserDepartment">Department:</label>
-                                                <input type="text" id="addUserDepartment" class="form-control">
-                                            </div>
-                                            <button type="button" id="saveNewUserButton" class="btn btn-primary">Add User</button>
-                                        </form>
-
-                                        <hr>
-
-                                        <!-- Upload CSV Section -->
-                                        <form id="uploadCsvForm" enctype="multipart/form-data">
-                                            <div class="form-group">
-                                                <label for="csvFile">Upload CSV File:</label>
-                                                <input type="file" id="csvFile" class="form-control-file" accept=".csv" required>
-                                            </div>
-                                            <button type="button" id="uploadCsvButton" class="btn btn-secondary">Upload CSV</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Filter Section -->
+                        <!-- User Type Dropdown -->
                         <div class="card mb-4">
-                            <div class="card-header">Filter Users</div>
+                            <div class="card-header">Select User Type</div>
                             <div class="card-body">
                                 <div class="form-group">
                                     <label for="userType">User Type:</label>
                                     <select id="userType" class="form-control">
                                         <option value="">Select User Type</option>
                                         <option value="student">Student</option>
-                                        <option value="faculty">Faculty</option>
+                                        <option value="fa">Faculty Advisor</option>
+                                        <option value="hod">HOD</option>
+                                        <option value="hc">Hostel Coordinator</option>
                                     </select>
                                 </div>
 
-                                <!-- Student Filters -->
-                                <div id="studentFilters" style="display: none;">
-                                    <div class="form-group">
-                                        <label for="studentDepartment">Department:</label>
-                                        <input type="text" id="studentDepartment" class="form-control" placeholder="Enter Department">
+                                <!-- Student Filters (hidden by default) -->
+                                <div id="studentFilters" style="display:none;">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <label for="studentDept">Department:</label>
+                                            <select id="studentDept" class="form-control">
+                                                <option value="">All Departments</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <label for="studentYear">Year:</label>
+                                            <select id="studentYear" class="form-control">
+                                                <option value="">All Years</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <label for="studentSection">Section:</label>
+                                            <select id="studentSection" class="form-control">
+                                                <option value="">All Sections</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <label for="studentName">Student Name:</label>
+                                            <input type="text" id="studentName" class="form-control" placeholder="Search by name">
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="studentYear">Year:</label>
-                                        <input type="text" id="studentYear" class="form-control" placeholder="Enter Year">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="studentSection">Section:</label>
-                                        <input type="text" id="studentSection" class="form-control" placeholder="Enter Section">
-                                    </div>
+                                    <button type="button" id="applyStudentFilter" class="btn btn-primary">Apply Filter</button>
                                 </div>
 
-                                <!-- Faculty Filters -->
-                                <div id="facultyFilters" style="display: none;">
-                                    <div class="form-group">
-                                        <label for="facultyDepartment">Department:</label>
-                                        <input type="text" id="facultyDepartment" class="form-control" placeholder="Enter Department">
+                                <!-- Faculty Advisor Filter (hidden by default) -->
+                                <div id="faFilters" style="display:none;">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-4">
+                                            <label for="faName">Faculty Advisor Name:</label>
+                                            <input type="text" id="faName" class="form-control" placeholder="Search by name">
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="facultyPosition">Position:</label>
-                                        <select id="facultyPosition" class="form-control">
-                                            <option value="">Select Position</option>
-                                            <option value="Faculty Advisor">Faculty Advisor</option>
-                                            <option value="HOD">HOD</option>
-                                            <option value="Hostel Coordinator">Hostel Coordinator</option>
-                                        </select>
-                                    </div>
+                                    <button type="button" id="applyFaFilter" class="btn btn-primary">Apply Filter</button>
                                 </div>
-
-                                <button type="button" id="applyFilterButton" class="btn btn-primary">Apply Filter</button>
                             </div>
                         </div>
 
@@ -316,8 +211,7 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Actions</th>
+                                    <th>Role/Dept</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -329,39 +223,6 @@
             </div>
         </div>
     </form>
-
-    <!-- Modal for Editing User Details -->
-    <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editUserModalLabel">Edit User Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="editUserId">
-                    <div class="form-group">
-                        <label for="editUserName">Name:</label>
-                        <input type="text" id="editUserName" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="editUserEmail">Email:</label>
-                        <input type="email" id="editUserEmail" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="editUserRole">Role:</label>
-                        <input type="text" id="editUserRole" class="form-control">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" id="saveUserButton" class="btn btn-primary">Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 
 </html>
