@@ -10,9 +10,23 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
-            // Show/hide student filters
+            // Function to show/hide FA ID column
+            function toggleFaIdColumn(userType) {
+                if (userType === 'student' || userType === 'fa') {
+                    $('#userTable th.fa-id-col, #userTable td.fa-id-col').show();
+                } else {
+                    $('#userTable th.fa-id-col, #userTable td.fa-id-col').hide();
+                }
+            }
+
+            // On page load, hide FA ID column by default
+            toggleFaIdColumn($('#userType').val());
+
+            // Show/hide student filters and FA ID column
             $('#userType').change(function () {
                 const userType = $(this).val();
+                toggleFaIdColumn(userType);
+
                 if (userType === 'student') {
                     $('#studentFilters').show();
                     $('#faFilters').hide();
@@ -101,15 +115,19 @@
 
                         if (Array.isArray(users) && users.length > 0) {
                             users.forEach(function (user) {
-                                const row = `<tr>
+                                let row = `<tr>
                                     <td>${user.name}</td>
                                     <td>${user.email}</td>
-                                    <td>${user.department || user.role || ''}</td>
-                                </tr>`;
+                                    <td>${user.department || user.role || ''}</td>`;
+                                if (userType === 'student' || userType === 'fa') {
+                                    row += `<td class="fa-id-col">${user.fa_id || ''}</td>`;
+                                }
+                                row += `</tr>`;
                                 userTable.append(row);
                             });
                         } else {
-                            userTable.append('<tr><td colspan="3">No users found</td></tr>');
+                            let colspan = (userType === 'student' || userType === 'fa') ? 4 : 3;
+                            userTable.append(`<tr><td colspan="${colspan}">No users found</td></tr>`);
                         }
                     },
                     error: function () {
@@ -117,6 +135,159 @@
                     }
                 });
             }
+
+            function fetchAllFAs(callback) {
+                $.ajax({
+                    url: 'fetch_user_details.php',
+                    method: 'POST',
+                    data: { userType: 'fa' },
+                    success: function (data) {
+                        let fas = [];
+                        try {
+                            fas = JSON.parse(data);
+                        } catch (e) {
+                            fas = [];
+                        }
+                        callback(fas);
+                    }
+                });
+            }
+
+            // Change FA for filtered students
+            $('#changeFaFiltered').click(function () {
+                const dept = $('#studentDept').val();
+                const year = $('#studentYear').val();
+                const section = $('#studentSection').val();
+                const newFaId = $('#newFaSelectFiltered').val();
+
+                if (!dept || !year || !section || !newFaId) {
+                    alert('Please select Department, Year, Section, and New FA.');
+                    return;
+                }
+
+                if (confirm('Are you sure you want to change the FA for all students matching these filters?')) {
+                    $.ajax({
+                        url: 'update_fa_id.php',
+                        method: 'POST',
+                        data: {
+                            dept: dept,
+                            year: year,
+                            section: section,
+                            new_fa_id: newFaId,
+                            mode: 'filtered'
+                        },
+                        success: function (data) {
+                            let res = {};
+                            try { res = JSON.parse(data); } catch (e) { res = {}; }
+                            if (res.success) {
+                                alert('FA updated for all filtered students!');
+                                fetchUsers();
+                            } else {
+                                alert('Failed to update FA.');
+                            }
+                        },
+                        error: function () {
+                            alert('Error updating FA.');
+                        }
+                    });
+                }
+            });
+
+            function checkShowChangeFa() {
+                // Show the change FA option only if all three filters are selected
+                const dept = $('#studentDept').val();
+                const year = $('#studentYear').val();
+                const section = $('#studentSection').val();
+                if (dept && year && section) {
+                    $('#changeFaContainer').show();
+                    populateFaDropdownFiltered();
+                } else {
+                    $('#changeFaContainer').hide();
+                }
+            }
+
+            // Call this function when any student filter changes
+            $('#studentDept, #studentYear, #studentSection').change(checkShowChangeFa);
+
+            // Also call after filters are populated
+            $('#applyStudentFilter').click(function () {
+                fetchUsers();
+                checkShowChangeFa();
+            });
+
+            // Populate FA dropdown for filtered change
+            function populateFaDropdownFiltered() {
+                $.ajax({
+                    url: 'fetch_user_details.php',
+                    method: 'POST',
+                    data: { userType: 'fa' },
+                    success: function (data) {
+                        let fas = [];
+                        try { fas = JSON.parse(data); } catch (e) { fas = []; }
+                        let options = fas.map(fa => `<option value="${fa.fa_id}">${fa.name}</option>`).join('');
+                        $('#newFaSelectFiltered').html('<option value="">Select New FA</option>' + options);
+                    }
+                });
+            }
+
+            // Handle the change FA for filtered students
+            $('#changeFaFiltered').click(function () {
+                const dept = $('#studentDept').val();
+                const year = $('#studentYear').val();
+                const section = $('#studentSection').val();
+                const newFaId = $('#newFaSelectFiltered').val();
+
+                if (!dept || !year || !section || !newFaId) {
+                    alert('Please select Department, Year, Section, and New FA.');
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to change the FA for all students matching these filters?')) return;
+
+                $.ajax({
+                    url: 'update_fa_id.php',
+                    method: 'POST',
+                    data: {
+                        dept: dept,
+                        year: year,
+                        section: section,
+                        new_fa_id: newFaId,
+                        mode: 'filtered'
+                    },
+                    success: function (data) {
+                        let res = {};
+                        try { res = JSON.parse(data); } catch (e) { res = {}; }
+                        if (res.success) {
+                            alert('FA updated for all filtered students!');
+                            fetchUsers();
+                        } else {
+                            alert('Failed to update FA.');
+                        }
+                    },
+                    error: function () {
+                        alert('Error updating FA.');
+                    }
+                });
+            });
+
+            
+            // Populate FA dropdowns for all students change
+            function populateFaDropdowns() {
+                $.ajax({
+                    url: 'fetch_user_details.php',
+                    method: 'POST',
+                    data: { userType: 'fa' },
+                    success: function (data) {
+                        let fas = [];
+                        try { fas = JSON.parse(data); } catch (e) { fas = []; }
+                        let options = fas.map(fa => `<option value="${fa.fa_id}">${fa.name}</option>`).join('');
+                        $('#oldFaSelect, #newFaSelect').html('<option value="">Select FA</option>' + options);
+                    }
+                });
+            }
+
+            // Initial population of FA dropdowns
+            populateFaDropdowns();
         });
     </script>
 </head>
@@ -190,6 +361,19 @@
                                         </div>
                                     </div>
                                     <button type="button" id="applyStudentFilter" class="btn btn-primary">Apply Filter</button>
+
+                                    <!-- Change FA for Filtered Students (hidden by default) -->
+                                    <div id="changeFaContainer" style="display:none; margin-top:10px;">
+                                        <div class="form-row align-items-end">
+                                            <div class="form-group col-md-8">
+                                                <label for="newFaSelectFiltered">Select New Faculty Advisor:</label>
+                                                <select id="newFaSelectFiltered" class="form-control"></select>
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <button type="button" id="changeFaFiltered" class="btn btn-warning">Change FA for Filtered Students</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Faculty Advisor Filter (hidden by default) -->
@@ -212,12 +396,15 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role/Dept</th>
+                                    <th class="fa-id-col">FA ID</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <!-- User data will be dynamically populated here -->
                             </tbody>
                         </table>
+
+                    
                     </div>
                 </main>
             </div>

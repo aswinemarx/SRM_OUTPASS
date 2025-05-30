@@ -15,7 +15,8 @@ if ($userType === 'student') {
     $section = $_POST['section'] ?? '';
     $name = $_POST['name'] ?? '';
 
-    $sql = "SELECT id, name, email, dept, year, section FROM student WHERE 1=1";
+    // Add fa_id to SELECT
+    $sql = "SELECT id, name, email, dept, year, section, fa_id FROM student WHERE 1=1";
     $params = [];
     $types = '';
 
@@ -50,11 +51,13 @@ if ($userType === 'student') {
     $users = [];
     while ($row = $result->fetch_assoc()) {
         $users[] = [
+            'id' => $row['id'], // Add this line
             'name' => $row['name'],
             'email' => $row['email'],
             'department' => $row['dept'],
             'year' => $row['year'],
-            'section' => $row['section']
+            'section' => $row['section'],
+            'fa_id' => $row['fa_id']
         ];
     }
     echo json_encode($users);
@@ -64,6 +67,7 @@ if ($userType === 'student') {
 } else if ($userType === 'fa') {
     $name = $_POST['name'] ?? '';
 
+    // Add id as fa_id
     $sql = "SELECT id, name, email, dept FROM fa WHERE 1=1";
     $params = [];
     $types = '';
@@ -86,7 +90,8 @@ if ($userType === 'student') {
         $users[] = [
             'name' => $row['name'],
             'email' => $row['email'],
-            'department' => $row['dept']
+            'department' => $row['dept'],
+            'fa_id' => $row['id'] // Add this line
         ];
     }
     echo json_encode($users);
