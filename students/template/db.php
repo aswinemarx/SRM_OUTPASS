@@ -3,7 +3,7 @@
 
 $host = 'localhost';  // Your MySQL server (localhost if running locally)
 $username = 'root';    // Your MySQL username
-$password = 'samsung8.9';        // Your MySQL password
+$password = '';        // Your MySQL password
 $dbname = 'srm_student_portal'; // Database name
 
 try {
