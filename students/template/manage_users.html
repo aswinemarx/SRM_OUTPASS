@@ -8,9 +8,12 @@
     <link href="mainstyle.css" rel="stylesheet">
     <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .modal { display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; overflow:auto; background:rgba(0,0,0,0.4);}
+        .modal-dialog { margin:10% auto; }
+    </style>
     <script>
         $(document).ready(function () {
-            // Function to show/hide FA ID column
             function toggleFaIdColumn(userType) {
                 if (userType === 'student' || userType === 'fa') {
                     $('#userTable th.fa-id-col, #userTable td.fa-id-col').show();
@@ -19,10 +22,8 @@
                 }
             }
 
-            // On page load, hide FA ID column by default
             toggleFaIdColumn($('#userType').val());
 
-            // Show/hide student filters and FA ID column
             $('#userType').change(function () {
                 const userType = $(this).val();
                 toggleFaIdColumn(userType);
@@ -37,16 +38,14 @@
                 } else {
                     $('#studentFilters').hide();
                     $('#faFilters').hide();
-                    fetchUsers(); // fetch for hod/hc
+                    fetchUsers();
                 }
             });
 
-            // Fetch users when student filter is applied
             $('#applyStudentFilter').click(function () {
                 fetchUsers();
             });
 
-            // Fetch users when fa filter is applied
             $('#applyFaFilter').click(function () {
                 fetchUsers();
             });
@@ -57,21 +56,18 @@
                     method: 'GET',
                     dataType: 'json',
                     success: function (data) {
-                        // Populate department dropdown
                         const deptSelect = $('#studentDept');
                         deptSelect.empty().append('<option value="">All Departments</option>');
                         data.departments.forEach(function (dept) {
                             deptSelect.append(`<option value="${dept}">${dept}</option>`);
                         });
 
-                        // Populate year dropdown
                         const yearSelect = $('#studentYear');
                         yearSelect.empty().append('<option value="">All Years</option>');
                         data.years.forEach(function (year) {
                             yearSelect.append(`<option value="${year}">${year}</option>`);
                         });
 
-                        // Populate section dropdown
                         const sectionSelect = $('#studentSection');
                         sectionSelect.empty().append('<option value="">All Sections</option>');
                         data.sections.forEach(function (section) {
@@ -85,6 +81,7 @@
                 const userType = $('#userType').val();
                 if (!userType) {
                     $('#userTable tbody').empty();
+                    $('#userTableHead').empty();
                     return;
                 }
 
@@ -105,50 +102,81 @@
                     data: data,
                     success: function (data) {
                         let users = [];
-                        try {
-                            users = JSON.parse(data);
-                        } catch (e) {
-                            users = [];
-                        }
+                        try { users = JSON.parse(data); } catch (e) { users = []; }
                         const userTable = $('#userTable tbody');
                         userTable.empty();
 
-                        if (Array.isArray(users) && users.length > 0) {
+                        if (userType === 'hod') {
+                            $('#userTableHead').html(`
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Action</th>
+                                </tr>
+                            `);
+                            populateHodTableRows(users);
+                        } else if (userType === 'hc') {
+                            $('#userTableHead').html(`
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Hostel</th>
+                                    <th>Action</th>
+                                </tr>
+                            `);
+                            populateHcTableRows(users);
+                        } else if (userType === 'fa') {
+                            $('#userTableHead').html(`
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>FA ID</th>
+                                    <th>Action</th>
+                                </tr>
+                            `);
                             users.forEach(function (user) {
-                                let row = `<tr>
+                                let row = `<tr data-fa-id="${user.fa_id}">
                                     <td>${user.name}</td>
                                     <td>${user.email}</td>
-                                    <td>${user.department || user.role || ''}</td>`;
-                                if (userType === 'student' || userType === 'fa') {
-                                    row += `<td class="fa-id-col">${user.fa_id || ''}</td>`;
-                                }
-                                row += `</tr>`;
+                                    <td>${user.department || ''}</td>
+                                    <td>${user.fa_id || ''}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm delete-fa-btn">Delete</button>
+                                    </td>
+                                </tr>`;
                                 userTable.append(row);
                             });
                         } else {
-                            let colspan = (userType === 'student' || userType === 'fa') ? 4 : 3;
-                            userTable.append(`<tr><td colspan="${colspan}">No users found</td></tr>`);
+                            $('#userTableHead').html(`
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role/Dept</th>
+                                    <th class="fa-id-col">FA ID</th>
+                                </tr>
+                            `);
+                            if (Array.isArray(users) && users.length > 0) {
+                                users.forEach(function (user) {
+                                    let row = `<tr>
+                                        <td>${user.name}</td>
+                                        <td>${user.email}</td>
+                                        <td>${user.department || user.role || ''}</td>`;
+                                    if (userType === 'student' || userType === 'fa') {
+                                        row += `<td class="fa-id-col">${user.fa_id || ''}</td>`;
+                                    }
+                                    row += `</tr>`;
+                                    userTable.append(row);
+                                });
+                            } else {
+                                let colspan = (userType === 'student' || userType === 'fa') ? 4 : 3;
+                                userTable.append(`<tr><td colspan="${colspan}">No users found</td></tr>`);
+                            }
                         }
                     },
                     error: function () {
                         alert('Error fetching user details.');
-                    }
-                });
-            }
-
-            function fetchAllFAs(callback) {
-                $.ajax({
-                    url: 'fetch_user_details.php',
-                    method: 'POST',
-                    data: { userType: 'fa' },
-                    success: function (data) {
-                        let fas = [];
-                        try {
-                            fas = JSON.parse(data);
-                        } catch (e) {
-                            fas = [];
-                        }
-                        callback(fas);
                     }
                 });
             }
@@ -194,7 +222,6 @@
             });
 
             function checkShowChangeFa() {
-                // Show the change FA option only if all three filters are selected
                 const dept = $('#studentDept').val();
                 const year = $('#studentYear').val();
                 const section = $('#studentSection').val();
@@ -206,16 +233,13 @@
                 }
             }
 
-            // Call this function when any student filter changes
             $('#studentDept, #studentYear, #studentSection').change(checkShowChangeFa);
 
-            // Also call after filters are populated
             $('#applyStudentFilter').click(function () {
                 fetchUsers();
                 checkShowChangeFa();
             });
 
-            // Populate FA dropdown for filtered change
             function populateFaDropdownFiltered() {
                 $.ajax({
                     url: 'fetch_user_details.php',
@@ -230,64 +254,262 @@
                 });
             }
 
-            // Handle the change FA for filtered students
-            $('#changeFaFiltered').click(function () {
-                const dept = $('#studentDept').val();
-                const year = $('#studentYear').val();
-                const section = $('#studentSection').val();
-                const newFaId = $('#newFaSelectFiltered').val();
+            $('#showAddFaModal').click(function () {
+                $('#addFaModal').show();
+            });
 
-                if (!dept || !year || !section || !newFaId) {
-                    alert('Please select Department, Year, Section, and New FA.');
+            $('#addFaModal').on('click', function(e) {
+                if (e.target === this) $(this).hide();
+            });
+
+            $('#addFaBtn').click(function () {
+                const name = $('#addFaName').val().trim();
+                const email = $('#addFaEmail').val().trim();
+                const dept = $('#addFaDept').val().trim();
+                if (!name || !email || !dept) {
+                    alert('Please fill all fields.');
                     return;
                 }
-
-                if (!confirm('Are you sure you want to change the FA for all students matching these filters?')) return;
-
                 $.ajax({
-                    url: 'update_fa_id.php',
+                    url: 'add_fa.php',
                     method: 'POST',
-                    data: {
-                        dept: dept,
-                        year: year,
-                        section: section,
-                        new_fa_id: newFaId,
-                        mode: 'filtered'
-                    },
+                    data: { name: name, email: email, dept: dept },
                     success: function (data) {
                         let res = {};
                         try { res = JSON.parse(data); } catch (e) { res = {}; }
                         if (res.success) {
-                            alert('FA updated for all filtered students!');
+                            alert('Faculty Advisor added.');
+                            $('#addFaModal').hide();
+                            $('#addFaName, #addFaEmail, #addFaDept').val('');
                             fetchUsers();
                         } else {
-                            alert('Failed to update FA.');
+                            alert('Failed to add FA: ' + (res.error || 'Unknown error'));
                         }
-                    },
-                    error: function () {
-                        alert('Error updating FA.');
                     }
                 });
             });
 
-            
-            // Populate FA dropdowns for all students change
-            function populateFaDropdowns() {
+            $(document).on('click', '.delete-fa-btn', function () {
+                const row = $(this).closest('tr');
+                const faId = row.data('fa-id');
+                if (!faId) return;
+
                 $.ajax({
-                    url: 'fetch_user_details.php',
+                    url: 'delete_fa.php',
                     method: 'POST',
-                    data: { userType: 'fa' },
+                    data: { fa_id: faId, check_only: 1 },
                     success: function (data) {
-                        let fas = [];
-                        try { fas = JSON.parse(data); } catch (e) { fas = []; }
-                        let options = fas.map(fa => `<option value="${fa.fa_id}">${fa.name}</option>`).join('');
-                        $('#oldFaSelect, #newFaSelect').html('<option value="">Select FA</option>' + options);
+                        let res = {};
+                        try { res = JSON.parse(data); } catch (e) { res = {}; }
+                        if (res.assigned) {
+                            alert('Cannot delete: This FA is assigned to one or more students.');
+                        } else {
+                            if (confirm('Are you sure you want to delete this Faculty Advisor?')) {
+                                $.ajax({
+                                    url: 'delete_fa.php',
+                                    method: 'POST',
+                                    data: { fa_id: faId },
+                                    success: function (data) {
+                                        let res = {};
+                                        try { res = JSON.parse(data); } catch (e) { res = {}; }
+                                        if (res.success) {
+                                            alert('Faculty Advisor deleted.');
+                                            fetchUsers();
+                                        } else {
+                                            alert('Failed to delete FA.');
+                                        }
+                                    }
+                                });
+                            }
+                        }
                     }
                 });
+            });
+
+            function populateHodTableRows(users) {
+                const userTable = $('#userTable tbody');
+                userTable.empty();
+
+                if (Array.isArray(users) && users.length > 0) {
+                    users.forEach(function (user) {
+                        let row = `<tr data-hod-id="${user.id}">
+    <td>
+        <span class="hod-name-text">${user.name}</span>
+        <input type="text" class="form-control hod-name-input" value="${user.name}" style="display:none;">
+    </td>
+    <td>
+        <span class="hod-email-text">${user.email}</span>
+        <input type="email" class="form-control hod-email-input" value="${user.email}" style="display:none;">
+    </td>
+    <td>${user.department || ''}</td>
+    <td>
+        <button type="button" class="btn btn-sm btn-primary edit-hod-btn">Edit</button>
+        <button type="button" class="btn btn-sm btn-success save-hod-btn" style="display:none;">Save</button>
+    </td>
+</tr>`;
+                        userTable.append(row);
+                    });
+                } else {
+                    userTable.append(`<tr><td colspan="4">No HODs found</td></tr>`);
+                }
             }
 
-            // Initial population of FA dropdowns
-            populateFaDropdowns();
+            function populateHcTableRows(users) {
+                const userTable = $('#userTable tbody');
+                userTable.empty();
+
+                if (Array.isArray(users) && users.length > 0) {
+                    users.forEach(function (user) {
+                        let row = `<tr data-hc-id="${user.id}">
+    <td>
+        <span class="hc-name-text">${user.name}</span>
+        <input type="text" class="form-control hc-name-input" value="${user.name}" style="display:none;">
+    </td>
+    <td>
+        <span class="hc-email-text">${user.email}</span>
+        <input type="email" class="form-control hc-email-input" value="${user.email}" style="display:none;">
+    </td>
+    <td>${user.department || ''}</td>
+    <td>
+        <button type="button" class="btn btn-sm btn-primary edit-hc-btn">Edit</button>
+        <button type="button" class="btn btn-sm btn-success save-hc-btn" style="display:none;">Save</button>
+    </td>
+</tr>`;
+                        userTable.append(row);
+                    });
+                } else {
+                    userTable.append(`<tr><td colspan="4">No Hostel Coordinators found</td></tr>`);
+                }
+            }
+
+            $(document).on('click', '.edit-hod-btn', function () {
+                const row = $(this).closest('tr');
+                row.find('.hod-name-text, .hod-email-text, .edit-hod-btn').hide();
+                row.find('.hod-name-input, .hod-email-input, .save-hod-btn').show();
+            });
+
+            $(document).on('click', '.save-hod-btn', function () {
+                const row = $(this).closest('tr');
+                const hodId = row.data('hod-id');
+                const newName = row.find('.hod-name-input').val();
+                const newEmail = row.find('.hod-email-input').val();
+
+                if (!newName || !newEmail) {
+                    alert('Name and Email cannot be empty.');
+                    return;
+                }
+
+                $.ajax({
+                    url: 'update_hod.php',
+                    method: 'POST',
+                    data: { id: hodId, name: newName, email: newEmail },
+                    success: function (data) {
+                        let res = {};
+                        try { res = JSON.parse(data); } catch (e) { res = {}; }
+                        if (res.success) {
+                            alert('HOD updated and password reset mail sent!');
+                            row.find('.hod-name-text').text(newName);
+                            row.find('.hod-email-text').text(newEmail);
+                            row.find('.hod-name-text, .hod-email-text, .edit-hod-btn').show();
+                            row.find('.hod-name-input, .hod-email-input, .save-hod-btn').hide();
+                        } else {
+                            alert('Failed to update HOD: ' + (res.error || 'Unknown error'));
+                        }
+                    },
+                    error: function () {
+                        alert('Error updating HOD.');
+                    }
+                });
+            });
+
+            $(document).on('click', '.edit-hc-btn', function () {
+                const row = $(this).closest('tr');
+                row.find('.hc-name-text, .hc-email-text, .edit-hc-btn').hide();
+                row.find('.hc-name-input, .hc-email-input, .save-hc-btn').show();
+            });
+
+            $(document).on('click', '.save-hc-btn', function () {
+                const row = $(this).closest('tr');
+                const hcId = row.data('hc-id');
+                const newName = row.find('.hc-name-input').val();
+                const newEmail = row.find('.hc-email-input').val();
+
+                if (!newName || !newEmail) {
+                    alert('Name and Email cannot be empty.');
+                    return;
+                }
+
+                $.ajax({
+                    url: 'update_hc.php',
+                    method: 'POST',
+                    data: { id: hcId, name: newName, email: newEmail },
+                    success: function (data) {
+                        let res = {};
+                        try { res = JSON.parse(data); } catch (e) { res = {}; }
+                        if (res.success) {
+                            alert('Hostel Coordinator updated!');
+                            row.find('.hc-name-text').text(newName);
+                            row.find('.hc-email-text').text(newEmail);
+                            row.find('.hc-name-text, .hc-email-text, .edit-hc-btn').show();
+                            row.find('.hc-name-input, .hc-email-input, .save-hc-btn').hide();
+                        } else {
+                            alert('Failed to update Hostel Coordinator: ' + (res.error || 'Unknown error'));
+                        }
+                    },
+                    error: function () {
+                        alert('Error updating Hostel Coordinator.');
+                    }
+                });
+            });
+
+            // Show modal for uploading students
+            $('#showUploadStudentModal').click(function () {
+                $('#uploadStudentModal').show();
+            });
+
+            // Hide modal on background click
+            $('#uploadStudentModal').on('click', function(e) {
+                if (e.target === this) $(this).hide();
+            });
+
+            // AJAX upload handler
+            $('#uploadStudentForm').on('submit', function (e) {
+                e.preventDefault();
+                var fileInput = $('#excelFile')[0];
+                if (!fileInput.files.length) {
+                    alert('Please select an Excel file.');
+                    return false;
+                }
+                var formData = new FormData(this);
+                $.ajax({
+                    url: 'upload_excel.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (data) {
+                        let res = {};
+                        try { res = JSON.parse(data); } catch (e) { 
+                            alert('Invalid server response:\n' + data);
+                            return;
+                        }
+                        if (res.message) {
+                            alert(res.message + (res.details && res.details.length ? "\n" + res.details.join("\n") : ""));
+                            $('#uploadStudentModal').hide();
+                            $('#excelFile').val('');
+                            fetchUsers();
+                        } else {
+                            alert(res.error || 'Upload failed');
+                        }
+                    },
+                    error: function () {
+                        alert('Error uploading file.');
+                    }
+                });
+                return false; // <--- This ensures no refresh
+            });
+
+            fetchUsers();
         });
     </script>
 </head>
@@ -361,6 +583,7 @@
                                         </div>
                                     </div>
                                     <button type="button" id="applyStudentFilter" class="btn btn-primary">Apply Filter</button>
+                                    <button type="button" id="showUploadStudentModal" class="btn btn-success ml-2">Add Students</button>
 
                                     <!-- Change FA for Filtered Students (hidden by default) -->
                                     <div id="changeFaContainer" style="display:none; margin-top:10px;">
@@ -385,31 +608,69 @@
                                         </div>
                                     </div>
                                     <button type="button" id="applyFaFilter" class="btn btn-primary">Apply Filter</button>
+                                    <button type="button" id="showAddFaModal" class="btn btn-success ml-2">Add FA</button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- User Details Table -->
                         <table class="table table-bordered" id="userTable">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role/Dept</th>
-                                    <th class="fa-id-col">FA ID</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- User data will be dynamically populated here -->
-                            </tbody>
+                            <thead id="userTableHead"></thead>
+                            <tbody></tbody>
                         </table>
 
-                    
+                        <!-- Add Faculty Advisor Modal -->
+                        <div class="modal" id="addFaModal" tabindex="-1" role="dialog">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">Add Faculty Advisor</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#addFaModal').hide();">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <div class="modal-body">
+                                <input type="text" id="addFaName" class="form-control mb-2" placeholder="Name">
+                                <input type="email" id="addFaEmail" class="form-control mb-2" placeholder="Email">
+                                <input type="text" id="addFaDept" class="form-control mb-2" placeholder="Department">
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" id="addFaBtn" class="btn btn-success">Add</button>
+                                <button type="button" class="btn btn-secondary" onclick="$('#addFaModal').hide();">Cancel</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                     </div>
                 </main>
             </div>
         </div>
-    </form>
-</body>
+    </form> <!-- This closes your main form -->
 
+    <!-- Upload Students Modal -->
+    <div class="modal" id="uploadStudentModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <form id="uploadStudentForm" enctype="multipart/form-data">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Upload Students (Excel)</h5>
+              <button type="button" class="close" onclick="$('#uploadStudentModal').hide();">&times;</button>
+            </div>
+            <div class="modal-body">
+              <input type="file" name="excelFile" id="excelFile" accept=".xlsx,.xls" required>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Upload</button>
+              <button type="button" class="btn btn-secondary" onclick="$('#uploadStudentModal').hide();">Cancel</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add these scripts just before the closing </body> tag if not already present -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+</body>
 </html>

@@ -105,6 +105,7 @@ if ($userType === 'student') {
     $users = [];
     while ($row = $result->fetch_assoc()) {
         $users[] = [
+            'id' => $row['id'],
             'name' => $row['name'],
             'email' => $row['email'],
             'department' => $row['dept']
@@ -119,6 +120,7 @@ if ($userType === 'student') {
     $users = [];
     while ($row = $result->fetch_assoc()) {
         $users[] = [
+            'id' => $row['id'],
             'name' => $row['name'],
             'email' => $row['email'],
             'department' => $row['hostel']
