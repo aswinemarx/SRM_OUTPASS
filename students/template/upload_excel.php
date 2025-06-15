@@ -21,9 +21,20 @@ if (isset($_FILES['excelFile']) && $_FILES['excelFile']['error'] === UPLOAD_ERR_
     $rows = $sheet->toArray();
 
     // Check for header row
-    $header = array_map('strtolower', $rows[0]);
-    $expected = ['name','email','r_no','dept','section','year','s_no','p_no','gender','hostel','fa_id','hod_id','room_number','w_mail','p_mail','address'];
-    if ($header !== $expected) {
+    $headerRow = array_slice($rows[0], 0, 16);
+
+    // Normalize header and expected for comparison
+    $normalize = function($arr) {
+        return array_map(function($v) {
+            return strtolower(trim(preg_replace('/\s+/', '', (string)$v)));
+        }, $arr);
+    };
+    $headerNorm = $normalize($headerRow);
+    $expectedNorm = $normalize(['name','email','r_no','dept','section','year','s_no','p_no','gender','hostel','fa_id','hod_id','room_number','w_mail','p_mail','address']);
+
+    if ($headerNorm !== $expectedNorm) {
+        error_log('Header: ' . var_export($headerNorm, true));
+        error_log('Expected: ' . var_export($expectedNorm, true));
         echo json_encode(['error' => 'Invalid header row. Please use the provided sample file.']);
         $conn->close();
         exit;
@@ -34,7 +45,7 @@ if (isset($_FILES['excelFile']) && $_FILES['excelFile']['error'] === UPLOAD_ERR_
     $messages = [];
 
     for ($i = 1; $i < count($rows); $i++) {
-        $row = $rows[$i];
+        $row = array_slice($rows[$i], 0, 16); // Only use first 16 columns
         if (count($row) < 16) {
             $failCount++;
             $messages[] = "Row $i: Incomplete row (less than 16 columns).";
@@ -54,26 +65,31 @@ if (isset($_FILES['excelFile']) && $_FILES['excelFile']['error'] === UPLOAD_ERR_
             continue;
         }
 
-        // 1. Insert into users table if not exists
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ? AND user_type = 'student'");
+        // Check if email already exists in users table
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->bind_result($exists);
         $stmt->fetch();
         $stmt->close();
 
-        if (!$exists) {
-            $default_password = password_hash('changeme', PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO users (username, password, user_type) VALUES (?, ?, 'student')");
-            $stmt->bind_param("ss", $email, $default_password);
-            if (!$stmt->execute()) {
-                $failCount++;
-                $messages[] = "Row $i: Failed to insert into users table.";
-                $stmt->close();
-                continue;
-            }
-            $stmt->close();
+        if ($exists) {
+            $failCount++;
+            $messages[] = "Row $i: Email '$email' already exists in users table. Row ignored.";
+            continue;
         }
+
+        // 1. Insert into users table
+        $default_password = password_hash('changeme', PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO users (username, password, user_type) VALUES (?, ?, 'student')");
+        $stmt->bind_param("ss", $email, $default_password);
+        if (!$stmt->execute()) {
+            $failCount++;
+            $messages[] = "Row $i: Failed to insert into users table.";
+            $stmt->close();
+            continue;
+        }
+        $stmt->close();
 
         // 2. Insert into student table
         $stmt = $conn->prepare("INSERT INTO student (name, email, r_no, dept, section, year, s_no, p_no, gender, hostel, fa_id, hod_id, room_number, w_mail, p_mail, address)

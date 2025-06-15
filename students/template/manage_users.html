@@ -148,6 +148,36 @@
                                 </tr>`;
                                 userTable.append(row);
                             });
+                        } else if (userType === 'student') {
+                            $('#userTableHead').html(`
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Year</th>
+                                    <th>Section</th>
+                                    <th class="fa-id-col">FA ID</th>
+                                    <th>Action</th>
+                                </tr>
+                            `);
+                            if (Array.isArray(users) && users.length > 0) {
+                                users.forEach(function (user) {
+                                    let row = `<tr data-student-id="${user.id}">
+                                        <td>${user.name}</td>
+                                        <td>${user.email}</td>
+                                        <td>${user.department || ''}</td>
+                                        <td>${user.year || ''}</td>
+                                        <td>${user.section || ''}</td>
+                                        <td class="fa-id-col">${user.fa_id || ''}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm delete-student-btn">Delete</button>
+                                        </td>
+                                    </tr>`;
+                                    userTable.append(row);
+                                });
+                            } else {
+                                userTable.append(`<tr><td colspan="7">No users found</td></tr>`);
+                            }
                         } else {
                             $('#userTableHead').html(`
                                 <tr>
@@ -326,6 +356,56 @@
                 });
             });
 
+            // Delete individual student
+            $(document).on('click', '.delete-student-btn', function () {
+                const row = $(this).closest('tr');
+                const studentId = row.data('student-id');
+                if (!studentId) return;
+                if (confirm('Are you sure you want to delete this student?')) {
+                    $.ajax({
+                        url: 'delete_student.php',
+                        method: 'POST',
+                        data: { id: studentId },
+                        success: function (data) {
+                            let res = {};
+                            try { res = JSON.parse(data); } catch (e) { res = {}; }
+                            if (res.success) {
+                                alert('Student deleted.');
+                                fetchUsers();
+                            } else {
+                                alert('Failed to delete student.');
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Delete all students for selected year
+            $('#deleteAllStudentsYear').click(function () {
+                const year = $('#studentYear').val();
+                if (!year) {
+                    alert('Please select a year.');
+                    return;
+                }
+                if (confirm('Are you sure you want to delete ALL students for year ' + year + '?')) {
+                    $.ajax({
+                        url: 'delete_student.php',
+                        method: 'POST',
+                        data: { year: year, delete_all: 1 },
+                        success: function (data) {
+                            let res = {};
+                            try { res = JSON.parse(data); } catch (e) { res = {}; }
+                            if (res.success) {
+                                alert('All students for year ' + year + ' deleted.');
+                                fetchUsers();
+                            } else {
+                                alert('Failed to delete students.');
+                            }
+                        }
+                    });
+                }
+            });
+
             function populateHodTableRows(users) {
                 const userTable = $('#userTable tbody');
                 userTable.empty();
@@ -487,21 +567,16 @@
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function (data) {
-                        let res = {};
-                        try { res = JSON.parse(data); } catch (e) { 
-                            alert('Invalid server response:\n' + data);
-                            return;
-                        }
+                    success: function (res) {
                         if (res.message) {
-                            alert(res.message + (res.details && res.details.length ? "\n" + res.details.join("\n") : ""));
-                            $('#uploadStudentModal').hide();
-                            $('#excelFile').val('');
-                            fetchUsers();
-                        } else {
-                            alert(res.error || 'Upload failed');
-                        }
-                    },
+        alert(res.message + (res.details && res.details.length ? "\n" + res.details.join("\n") : ""));
+        $('#uploadStudentModal').hide();
+        $('#excelFile').val('');
+        fetchUsers();
+    } else {
+        alert(res.error || 'Upload failed');
+    }
+},
                     error: function () {
                         alert('Error uploading file.');
                     }
@@ -584,6 +659,7 @@
                                     </div>
                                     <button type="button" id="applyStudentFilter" class="btn btn-primary">Apply Filter</button>
                                     <button type="button" id="showUploadStudentModal" class="btn btn-success ml-2">Add Students</button>
+                                    <button type="button" id="deleteAllStudentsYear" class="btn btn-danger ml-2">Delete All Students for Selected Year</button>
 
                                     <!-- Change FA for Filtered Students (hidden by default) -->
                                     <div id="changeFaContainer" style="display:none; margin-top:10px;">
