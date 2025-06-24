@@ -118,9 +118,17 @@
             }, 'json');
         }
 
-        $('#btnPreviewAdminReport').on('click', function () { fetchAdminReport(); });
-        $('#btnExportAdminPDF').on('click', function () { fetchAdminReport('pdf'); });
-        $('#btnExportAdminExcel').on('click', function () { fetchAdminReport('excel'); });
+        $('#btnPreviewAdminReport, #btnExportAdminPDF, #btnExportAdminExcel').on('click', function () {
+            // Validate required fields
+            if (!$('#filterRole').val() || !$('#filterFromDate').val() || !$('#filterToDate').val()) {
+                alert('Please select Role, From, and To dates.');
+                return;
+            }
+            let exportType = '';
+            if (this.id === 'btnExportAdminPDF') exportType = 'pdf';
+            if (this.id === 'btnExportAdminExcel') exportType = 'excel';
+            fetchAdminReport(exportType);
+        });
 
         $('#adminReportFilterForm input, #adminReportFilterForm select').on('change', function () {
             fetchAdminReport();
@@ -212,9 +220,9 @@
                                 <div class="card-body py-2">
                                     <form class="form-row align-items-end" id="adminReportFilterForm">
                                         <div class="form-group col-md-2">
-                                            <label>Role</label>
-                                            <select class="form-control" id="filterRole">
-                                                <option value="">All</option>
+                                            <label>Role <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="filterRole" required>
+                                                <option value="">Select Role</option>
                                                 <option value="Student">Student</option>
                                                 <option value="FA">Faculty Advisor</option>
                                                 <option value="HOD">HOD</option>
@@ -235,12 +243,20 @@
                                             </select>
                                         </div>
                                         <div class="form-group col-md-2">
-                                            <label>From</label>
-                                            <input type="date" class="form-control" id="filterFromDate">
+                                            <label>Register No.</label>
+                                            <input type="text" class="form-control" id="filterRegisterNo" placeholder="Register No.">
                                         </div>
                                         <div class="form-group col-md-2">
-                                            <label>To</label>
-                                            <input type="date" class="form-control" id="filterToDate">
+                                            <label>Year</label>
+                                            <input type="text" class="form-control" id="filterYear" placeholder="Year">
+                                        </div>
+                                        <div class="form-group col-md-2">
+                                            <label>From <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="filterFromDate" required>
+                                        </div>
+                                        <div class="form-group col-md-2">
+                                            <label>To <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="filterToDate" required>
                                         </div>
                                         <div class="form-group col-md-2">
                                             <label>Sort By</label>
@@ -249,6 +265,8 @@
                                                 <option value="student_name">Student Name</option>
                                                 <option value="status">Status</option>
                                                 <option value="department">Department</option>
+                                                <option value="r_no">Register No.</option>
+                                                <option value="year">Year</option>
                                             </select>
                                         </div>
                                         <div class="form-group col-md-2">
