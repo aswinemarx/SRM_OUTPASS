@@ -233,6 +233,10 @@
                 date_from: $('#filterFromDate').val(),
                 date_to: $('#filterToDate').val(),
                 decision: $('#filterDecision').val(),
+                r_no: $('#filterRegisterNo').val(),
+                date_out: $('#filterDateOut').val(),
+                date_in: $('#filterDateIn').val(),
+                reason: $('#filterReason').val(),
                 sort_by: $('#filterSortBy').val(),
                 order: 'ASC',
                 export: exportType
@@ -258,9 +262,18 @@
             }, 'json');
         }
 
-        $('#btnPreviewReport').on('click', function() { fetchFAReport(); });
-        $('#btnExportPDF').on('click', function() { fetchFAReport('pdf'); });
-        $('#btnExportExcel').on('click', function() { fetchFAReport('excel'); });
+        $('#btnPreviewReport, #btnExportPDF, #btnExportExcel').on('click', function(e) {
+            // Validate required fields
+            if (!$('#filterStudentName').val() || !$('#filterFromDate').val() || !$('#filterToDate').val()) {
+                alert('Please fill all required fields: Student Name, From, and To.');
+                return;
+            }
+            // Determine export type
+            let exportType = '';
+            if (this.id === 'btnExportPDF') exportType = 'pdf';
+            if (this.id === 'btnExportExcel') exportType = 'excel';
+            fetchFAReport(exportType);
+        });
 
         // Optionally, trigger preview on filter change:
         $('#faReportFilters input, #faReportFilters select').on('change', function() {
@@ -417,8 +430,8 @@
                                     <div class="card-body py-2">
                                         <form id="faReportFilters" class="form-row align-items-end">
                                             <div class="form-group col-md-2">
-                                                <label>Student Name</label>
-                                                <input type="text" class="form-control" id="filterStudentName">
+                                                <label>Student Name <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="filterStudentName" required>
                                             </div>
                                             <div class="form-group col-md-2">
                                                 <label>Status</label>
@@ -430,12 +443,12 @@
                                                 </select>
                                             </div>
                                             <div class="form-group col-md-2">
-                                                <label>From</label>
-                                                <input type="date" class="form-control" id="filterFromDate">
+                                                <label>From <span class="text-danger">*</span></label>
+                                                <input type="date" class="form-control" id="filterFromDate" required>
                                             </div>
                                             <div class="form-group col-md-2">
-                                                <label>To</label>
-                                                <input type="date" class="form-control" id="filterToDate">
+                                                <label>To <span class="text-danger">*</span></label>
+                                                <input type="date" class="form-control" id="filterToDate" required>
                                             </div>
                                             <div class="form-group col-md-2">
                                                 <label>Decision</label>
@@ -452,7 +465,27 @@
                                                     <option value="student_name">Student Name</option>
                                                     <option value="status">Status</option>
                                                     <option value="fa_comment">FA Comment</option>
+                                                    <option value="r_no">Register No.</option>
+                                                    <option value="date_out">Date (Out)</option>
+                                                    <option value="date_in">Date (In)</option>
+                                                    <option value="reason_for_leave">Reason</option>
                                                 </select>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Register No.</label>
+                                                <input type="text" class="form-control" id="filterRegisterNo">
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Date (Out)</label>
+                                                <input type="date" class="form-control" id="filterDateOut">
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Date (In)</label>
+                                                <input type="date" class="form-control" id="filterDateIn">
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Reason</label>
+                                                <input type="text" class="form-control" id="filterReason">
                                             </div>
                                             <div class="form-group col-md-2">
                                                 <button type="button" class="btn btn-primary" id="btnPreviewReport">Preview</button>
