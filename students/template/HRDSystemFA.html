@@ -225,6 +225,47 @@
             }
         }
 
+        function fetchFAReport(exportType = '') {
+            const params = {
+                fa_id: $('#user_id').val(),
+                student_name: $('#filterStudentName').val(),
+                status: $('#filterStatus').val(),
+                date_from: $('#filterFromDate').val(),
+                date_to: $('#filterToDate').val(),
+                decision: $('#filterDecision').val(),
+                sort_by: $('#filterSortBy').val(),
+                order: 'ASC',
+                export: exportType
+            };
+            if (exportType) {
+                // Export as file
+                const url = 'generate_fa_report.php?' + $.param(params);
+                window.open(url, '_blank');
+                return;
+            }
+            // Preview in table
+            $.get('generate_fa_report.php', params, function(data) {
+                let rows = '';
+                data.forEach(row => {
+                    rows += `<tr>
+                        <td>${row.student_name}</td>
+                        <td>${row.submission_time}</td>
+                        <td>${row.status}</td>
+                        <td>${row.fa_comment || ''}</td>
+                    </tr>`;
+                });
+                $('#faReportPreview tbody').html(rows);
+            }, 'json');
+        }
+
+        $('#btnPreviewReport').on('click', function() { fetchFAReport(); });
+        $('#btnExportPDF').on('click', function() { fetchFAReport('pdf'); });
+        $('#btnExportExcel').on('click', function() { fetchFAReport('excel'); });
+
+        // Optionally, trigger preview on filter change:
+        $('#faReportFilters input, #faReportFilters select').on('change', function() {
+            fetchFAReport();
+        });
     </script>
 </head>
 
@@ -360,6 +401,78 @@
                                                 </thead>
                                                 <tbody>
                                                     <!-- Outpass data will be appended here by JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container-fluid">
+                        <div class="row justify-content-center">
+                            <div class="col-md-12">
+                                <div class="card border-custom mb-4">
+                                    <div class="card-header bg-custom text-white"><i class="fa fa-file-export"></i> Generate Outpass Report</div>
+                                    <div class="card-body py-2">
+                                        <form id="faReportFilters" class="form-row align-items-end">
+                                            <div class="form-group col-md-2">
+                                                <label>Student Name</label>
+                                                <input type="text" class="form-control" id="filterStudentName">
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Status</label>
+                                                <select class="form-control" id="filterStatus">
+                                                    <option value="">All</option>
+                                                    <option value="approved">Approved</option>
+                                                    <option value="declined">Declined</option>
+                                                    <option value="pending">Pending</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>From</label>
+                                                <input type="date" class="form-control" id="filterFromDate">
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>To</label>
+                                                <input type="date" class="form-control" id="filterToDate">
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Decision</label>
+                                                <select class="form-control" id="filterDecision">
+                                                    <option value="">All</option>
+                                                    <option value="approved">Approved</option>
+                                                    <option value="declined">Declined</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Sort By</label>
+                                                <select class="form-control" id="filterSortBy">
+                                                    <option value="submission_time">Submission Time</option>
+                                                    <option value="student_name">Student Name</option>
+                                                    <option value="status">Status</option>
+                                                    <option value="fa_comment">FA Comment</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <button type="button" class="btn btn-primary" id="btnPreviewReport">Preview</button>
+                                                <button type="button" class="btn btn-success" id="btnExportPDF">Export PDF</button>
+                                                <button type="button" class="btn btn-info" id="btnExportExcel">Export Excel</button>
+                                            </div>
+                                        </form>
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-bordered" id="faReportPreview">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student Name</th>
+                                                        <th>Submission Time</th>
+                                                        <th>Status</th>
+                                                        <th>FA Comment</th>
+                                                        <!-- Add more columns as needed -->
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Preview data will be inserted here -->
                                                 </tbody>
                                             </table>
                                         </div>
