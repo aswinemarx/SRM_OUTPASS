@@ -1,5 +1,4 @@
 <?php
-<?php
 require_once '../../resources/db_connect.php'; // Adjust path as needed
 session_start();
 
@@ -10,16 +9,26 @@ if (!$hc_id) {
 }
 
 $hostel_block = $_GET['hostel_block'] ?? '';
+$status = $_GET['status'] ?? '';
+$approval_date = $_GET['approval_date'] ?? '';
+
 $sql = "SELECT s.name AS student_name, s.hostel_block, o.approval_date, o.return_date, o.return_time, o.status
         FROM outpass_requests o
         JOIN students s ON o.student_id = s.id
         WHERE o.hc_id = ? AND o.hod_approved = 1";
-
 $params = [$hc_id];
 
 if ($hostel_block) {
     $sql .= " AND s.hostel_block = ?";
     $params[] = $hostel_block;
+}
+if ($status) {
+    $sql .= " AND o.status = ?";
+    $params[] = $status;
+}
+if ($approval_date) {
+    $sql .= " AND o.approval_date = ?";
+    $params[] = $approval_date;
 }
 
 $sql .= " ORDER BY s.name ASC"; // Default sort

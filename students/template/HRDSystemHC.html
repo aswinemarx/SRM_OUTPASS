@@ -153,9 +153,16 @@
         }
 
         function fetchHCReport(exportType = '') {
+            // Validate required field
+            if (!$('#filterHostelBlock').val()) {
+                alert('Please select a Hostel Block.');
+                return;
+            }
             const params = {
                 hc_id: $('#user_id').val(),
                 hostel_block: $('#filterHostelBlock').val(),
+                status: $('#filterStatus').val(),
+                approval_date: $('#filterApprovalDate').val(),
                 export: exportType
             };
             if (exportType) {
@@ -181,7 +188,9 @@
         $('#btnExportHCPDF').on('click', function() { fetchHCReport('pdf'); });
         $('#btnExportHCExcel').on('click', function() { fetchHCReport('excel'); });
 
-        $('#filterHostelBlock').on('change', function() { fetchHCReport(); });
+        $('#hcReportFilterForm input, #hcReportFilterForm select').on('change', function() {
+            fetchHCReport();
+        });
     </script>
 </head>
 
@@ -292,22 +301,35 @@
     <div id="hcReportFilters" class="collapse show">
         <div class="card-body py-2">
             <form class="form-row align-items-end" id="hcReportFilterForm">
-                <div class="form-group col-md-3">
-                    <label>Hostel Block</label>
-                    <select class="form-control" id="filterHostelBlock" name="hostel_block">
-                        <option value="">All</option>
-                        <option value="A">Block A</option>
-                        <option value="B">Block B</option>
-                        <option value="C">Block C</option>
-                        <!-- Add more blocks as needed -->
-                    </select>
-                </div>
-                <div class="form-group col-md-3">
-                    <button type="button" class="btn btn-primary" id="btnPreviewHCReport">Preview</button>
-                    <button type="button" class="btn btn-success" id="btnExportHCPDF">Export PDF</button>
-                    <button type="button" class="btn btn-info" id="btnExportHCExcel">Export Excel</button>
-                </div>
-            </form>
+    <div class="form-group col-md-3">
+        <label>Hostel Block <span class="text-danger">*</span></label>
+        <select class="form-control" id="filterHostelBlock" name="hostel_block" required>
+            <option value="">Select Block</option>
+            <option value="A">Block A</option>
+            <option value="B">Block B</option>
+            <option value="C">Block C</option>
+            <!-- Add more blocks as needed -->
+        </select>
+    </div>
+    <div class="form-group col-md-3">
+        <label>Status</label>
+        <select class="form-control" id="filterStatus" name="status">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="declined">Declined</option>
+        </select>
+    </div>
+    <div class="form-group col-md-3">
+        <label>Approval Date</label>
+        <input type="date" class="form-control" id="filterApprovalDate" name="approval_date">
+    </div>
+    <div class="form-group col-md-3">
+        <button type="button" class="btn btn-primary" id="btnPreviewHCReport">Preview</button>
+        <button type="button" class="btn btn-success" id="btnExportHCPDF">Export PDF</button>
+        <button type="button" class="btn btn-info" id="btnExportHCExcel">Export Excel</button>
+    </div>
+</form>
         </div>
     </div>
 </div>
