@@ -151,6 +151,37 @@
                 }
             });
         }
+
+        function fetchHCReport(exportType = '') {
+            const params = {
+                hc_id: $('#user_id').val(),
+                hostel_block: $('#filterHostelBlock').val(),
+                export: exportType
+            };
+            if (exportType) {
+                window.open('generate_hc_report.php?' + $.param(params), '_blank');
+                return;
+            }
+            $.get('generate_hc_report.php', params, function(data) {
+                let rows = '';
+                data.forEach(row => {
+                    rows += `<tr>
+                        <td>${row.student_name}</td>
+                        <td>${row.hostel_block}</td>
+                        <td>${row.approval_date}</td>
+                        <td>${row.return_date} ${row.return_time}</td>
+                        <td>${row.status}</td>
+                    </tr>`;
+                });
+                $('#hcReportPreview tbody').html(rows);
+            }, 'json');
+        }
+
+        $('#btnPreviewHCReport').on('click', function() { fetchHCReport(); });
+        $('#btnExportHCPDF').on('click', function() { fetchHCReport('pdf'); });
+        $('#btnExportHCExcel').on('click', function() { fetchHCReport('excel'); });
+
+        $('#filterHostelBlock').on('change', function() { fetchHCReport(); });
     </script>
 </head>
 
@@ -253,6 +284,50 @@
                                 <div class="card border-custom mb-4">
                                     <div class="card-header bg-custom text-white"><i class="fa fa-file-alt"></i> Student Outpasses</div>
                                     <div class="card-body py-1">
+                                        <!-- Place above the outpassTable in your main content -->
+<div class="card border-custom mb-3">
+    <div class="card-header bg-custom text-white" data-toggle="collapse" data-target="#hcReportFilters" style="cursor:pointer;">
+        <i class="fa fa-filter"></i> Report Filters
+    </div>
+    <div id="hcReportFilters" class="collapse show">
+        <div class="card-body py-2">
+            <form class="form-row align-items-end" id="hcReportFilterForm">
+                <div class="form-group col-md-3">
+                    <label>Hostel Block</label>
+                    <select class="form-control" id="filterHostelBlock" name="hostel_block">
+                        <option value="">All</option>
+                        <option value="A">Block A</option>
+                        <option value="B">Block B</option>
+                        <option value="C">Block C</option>
+                        <!-- Add more blocks as needed -->
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <button type="button" class="btn btn-primary" id="btnPreviewHCReport">Preview</button>
+                    <button type="button" class="btn btn-success" id="btnExportHCPDF">Export PDF</button>
+                    <button type="button" class="btn btn-info" id="btnExportHCExcel">Export Excel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table table-bordered" id="hcReportPreview">
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Hostel Block</th>
+                <th>Approval Date</th>
+                <th>Return Date/Time</th>
+                <th>Status</th>
+                <!-- Add more columns as needed -->
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Preview data will be inserted here -->
+        </tbody>
+    </table>
+</div>
                                         <div class="table-responsive">
                                             <table class="table table-bordered" id="outpassTable">
                                                 <thead>
