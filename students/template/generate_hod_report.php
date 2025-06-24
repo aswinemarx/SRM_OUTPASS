@@ -1,5 +1,4 @@
 <?php
-<?php
 require_once '../../resources/db_connect.php'; // Adjust path as needed
 session_start();
 
@@ -73,3 +72,8 @@ if ($export === 'excel') {
 
 header('Content-Type: application/json');
 echo json_encode($rows);
+
+if (empty($status) || empty($date_from) || empty($date_to)) {
+    echo json_encode(['error' => 'Status, From, and To dates are required.']);
+    exit;
+}
