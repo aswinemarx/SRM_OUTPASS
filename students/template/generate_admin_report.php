@@ -1,5 +1,5 @@
 <?php
-require_once '../../resources/db_connect.php'; // Adjust path as needed
+require_once 'db.php'; // Use your db.php for database connection
 
 $role = $_GET['role'] ?? '';
 $department = $_GET['department'] ?? '';

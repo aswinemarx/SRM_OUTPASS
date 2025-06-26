@@ -1,5 +1,5 @@
 <?php
-require_once '../../resources/db_connect.php'; // Adjust path as needed
+require_once 'db.php'; // Adjust path as needed
 session_start();
 
 $hc_id = $_SESSION['hc_id'] ?? $_GET['hc_id'] ?? null;
