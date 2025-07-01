@@ -82,13 +82,62 @@ $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if ($export === 'pdf') {
-    // Use a PDF library like TCPDF or FPDF to generate PDF
-    // ...PDF generation code here...
+    require_once('fpdf/fpdf.php'); // Adjust path as needed
+
+    $pdf = new FPDF();
+    $pdf->AddPage();
+    $pdf->SetFont('Arial','B',12);
+
+    // Table header
+    foreach(array_keys($rows[0]) as $header) {
+        $pdf->Cell(40,10,ucwords(str_replace('_',' ',$header)),1);
+    }
+    $pdf->Ln();
+
+    // Table data
+    $pdf->SetFont('Arial','',10);
+    foreach($rows as $row) {
+        foreach($row as $cell) {
+            $pdf->Cell(40,10,$cell,1);
+        }
+        $pdf->Ln();
+    }
+
+    $pdf->Output('D', 'report.pdf');
     exit;
 }
 if ($export === 'excel') {
-    // Use a library like PhpSpreadsheet to generate Excel
-    // ...Excel generation code here...
+    require 'vendor/autoload.php'; // Adjust path as needed
+    use PhpOffice\PhpSpreadsheet\Spreadsheet;
+    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    // Header
+    $col = 1;
+    foreach(array_keys($rows[0]) as $header) {
+        $sheet->setCellValueByColumnAndRow($col, 1, ucwords(str_replace('_',' ',$header)));
+        $col++;
+    }
+
+    // Data
+    $rowNum = 2;
+    foreach($rows as $row) {
+        $col = 1;
+        foreach($row as $cell) {
+            $sheet->setCellValueByColumnAndRow($col, $rowNum, $cell);
+            $col++;
+        }
+        $rowNum++;
+    }
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="report.xlsx"');
+    header('Cache-Control: max-age=0');
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
     exit;
 }
 

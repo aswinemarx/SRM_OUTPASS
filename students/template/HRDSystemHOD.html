@@ -338,57 +338,75 @@
                     <div class="container-fluid">
                         <div class="row justify-content-center">
                             <div class="col-md-12">
+                                <!-- Student Outpasses Section -->
                                 <div class="card border-custom mb-4">
                                     <div class="card-header bg-custom text-white"><i class="fa fa-file-alt"></i> Student Outpasses</div>
                                     <div class="card-body py-1">
-                                        <!-- Add above the outpassTable -->
-                                        <div class="card border-custom mb-3">
-                                            <div class="card-header bg-custom text-white" data-toggle="collapse" data-target="#hodReportFilters" style="cursor:pointer;">
-                                                <i class="fa fa-filter"></i> Report Filters
-                                            </div>
-                                            <div id="hodReportFilters" class="collapse show">
-                                                <div class="card-body py-2">
-                                                    <form class="form-row align-items-end" id="hodReportFilterForm">
-                                                        <div class="form-group col-md-2">
-                                                            <label>Status <span class="text-danger">*</span></label>
-                                                            <select class="form-control" id="filterStatus" required>
-                                                                <option value="">Select Status</option>
-                                                                <option value="pending">Pending</option>
-                                                                <option value="approved">Approved</option>
-                                                                <option value="declined">Declined</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="form-group col-md-2">
-                                                            <label>Faculty Advisor</label>
-                                                            <input type="text" class="form-control" id="filterFAName" placeholder="FA Name">
-                                                        </div>
-                                                        <div class="form-group col-md-2">
-                                                            <label>From <span class="text-danger">*</span></label>
-                                                            <input type="date" class="form-control" id="filterFromDate" required>
-                                                        </div>
-                                                        <div class="form-group col-md-2">
-                                                            <label>To <span class="text-danger">*</span></label>
-                                                            <input type="date" class="form-control" id="filterToDate" required>
-                                                        </div>
-                                                        <div class="form-group col-md-2">
-                                                            <label>Sort By</label>
-                                                            <select class="form-control" id="filterSortBy">
-                                                                <option value="submitted_date">Submitted Date</option>
-                                                                <option value="student_name">Student Name</option>
-                                                                <option value="status">Status</option>
-                                                                <option value="reason">Reason</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="form-group col-md-2">
-                                                            <button type="button" class="btn btn-primary" id="btnPreviewHODReport">Preview</button>
-                                                            <button type="button" class="btn btn-success" id="btnExportHODPDF">Export PDF</button>
-                                                            <button type="button" class="btn btn-info" id="btnExportHODExcel">Export Excel</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
                                         <div class="table-responsive">
+                                            <table class="table table-bordered" id="outpassTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student Name</th>
+                                                        <th>Faculty Name</th>
+                                                        <th>Faculty comment</th>
+                                                        <th>Register No.</th>
+                                                        <th>Date (Out)</th>
+                                                        <th>Time (Out)</th>
+                                                        <th>Date (In)</th>
+                                                        <th>Time (In)</th>
+                                                        <th>Reason</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Outpass data will be appended here by JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Generate Outpass Report Section (SEPARATE CARD) -->
+                                <div class="card border-custom mb-4">
+                                    <div class="card-header bg-custom text-white"><i class="fa fa-file-export"></i> Generate Outpass Report</div>
+                                    <div class="card-body py-2">
+                                        <form class="form-row align-items-end" id="hodReportFilterForm">
+                                            <div class="form-group col-md-2">
+                                                <label>Status <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="filterStatus" required>
+                                                    <option value="">Select Status</option>
+                                                    <option value="pending">Pending</option>
+                                                    <option value="approved">Approved</option>
+                                                    <option value="declined">Declined</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Faculty Advisor</label>
+                                                <input type="text" class="form-control" id="filterFAName" placeholder="FA Name">
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>From <span class="text-danger">*</span></label>
+                                                <input type="date" class="form-control" id="filterFromDate" required>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>To <span class="text-danger">*</span></label>
+                                                <input type="date" class="form-control" id="filterToDate" required>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <label>Sort By</label>
+                                                <select class="form-control" id="filterSortBy">
+                                                    <option value="submitted_date">Submitted Date</option>
+                                                    <option value="student_name">Student Name</option>
+                                                    <option value="status">Status</option>
+                                                    <option value="reason">Reason</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-2">
+                                                <button type="button" class="btn btn-primary" id="btnPreviewHODReport">Preview</button>
+                                                <button type="button" class="btn btn-success" id="btnExportHODPDF">Export PDF</button>
+                                                <button type="button" class="btn btn-info" id="btnExportHODExcel">Export Excel</button>
+                                            </div>
+                                        </form>
+                                        <div class="table-responsive mt-3">
                                             <table class="table table-bordered" id="hodReportPreview">
                                                 <thead>
                                                     <tr>
