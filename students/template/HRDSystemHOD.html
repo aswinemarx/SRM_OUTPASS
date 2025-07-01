@@ -11,7 +11,6 @@
     <link href="customstyle.css" rel="stylesheet">
     <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
     <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
-    <script src="jquery.min.js"></script>
     <script src="bootstrap.bundle.min.js"></script>
     <script src="jquery.easing.min.js"></script>
     <script src="main.js"></script>
@@ -197,15 +196,19 @@
             }
             $.get('generate_hod_report.php', params, function(data) {
                 let rows = '';
-                data.forEach(row => {
-                    rows += `<tr>
-                        <td>${row.student_name}</td>
-                        <td>${row.submitted_date}</td>
-                        <td>${row.status}</td>
-                        <td>${row.fa_name}</td>
-                        <td>${row.reason}</td>
-                    </tr>`;
-                });
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(row => {
+                        rows += `<tr>
+                            <td>${row.student_name}</td>
+                            <td>${row.submitted_date}</td>
+                            <td>${row.status}</td>
+                            <td>${row.fa_name}</td>
+                            <td>${row.reason}</td>
+                        </tr>`;
+                    });
+                } else {
+                    rows = '<tr><td colspan="5" class="text-center">No records found.</td></tr>';
+                }
                 $('#hodReportPreview tbody').html(rows);
             }, 'json');
         }
@@ -230,6 +233,7 @@
 
 <body class="nav-fixed" onload="updateDateTime()">
     <form id="userHomePage" name="userHomePage" method="post">
+        <input type="hidden" id="user_id" value="<?php echo htmlspecialchars($_SESSION['hod_id'] ?? ''); ?>">
         <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
             <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle"><i class="fa fa-bars"></i></button>
             <a class="navbar-brand" href="../../faculty/loginManager/UserHomePage.jsp">
@@ -253,7 +257,10 @@
                 <nav class="sidenav shadow-right sidenav-light">
                     <div class="sidenav-menu">
                         <div class="nav accordion" id="accordionSidenav">
-                            <!-- Removed Dashboard Link -->
+                            <a class="nav-link" href="#" id="sidebarReportLink">
+                                <div class="nav-link-icon"><i class="fa fa-file-alt"></i></div>
+                                Report
+                            </a>
                             <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
                                 <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
                                 Logout
