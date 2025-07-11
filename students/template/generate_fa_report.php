@@ -1,33 +1,45 @@
 <?php
-require_once 'db.php'; // Adjust path as needed
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+require_once 'db.php';
+require_once 'vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 session_start();
 
-$fa_id = $_SESSION['fa_id'] ?? $_GET['fa_id'] ?? null;
+$fa_id = $_SESSION['user_id'] ?? $_GET['fa_id'] ?? null;
 if (!$fa_id) {
+    header('Content-Type: application/json');
     echo json_encode(['error' => 'Faculty Advisor not authenticated']);
     exit;
 }
 
-// Get filters/sort from GET/POST
+// Filters
 $student_name = $_GET['student_name'] ?? '';
 $status = $_GET['status'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
-$decision = $_GET['decision'] ?? '';
 $sort_by = $_GET['sort_by'] ?? 'submission_time';
-$order = $_GET['order'] ?? 'DESC';
-$export = $_GET['export'] ?? ''; // 'pdf' or 'excel'
-$r_no = $_GET['r_no'] ?? '';
-$date_out = $_GET['date_out'] ?? '';
-$date_in = $_GET['date_in'] ?? '';
-$reason = $_GET['reason'] ?? '';
+$order = strtoupper($_GET['order'] ?? 'ASC');
+$export = $_GET['export'] ?? '';
 
-// Build query with filters
-$sql = "SELECT s.name AS student_name, o.*, f.comment AS fa_comment
-        FROM outpass_requests o
-        JOIN students s ON o.student_id = s.id
-        LEFT JOIN fa_approval f ON o.id = f.outpass_id
-        WHERE o.fa_id = ?";
+// Allowed sort columns (only those still present)
+$allowed_sort = [
+    'student_name', 'status', 'fa_comment', 'submission_time'
+];
+if (!in_array($sort_by, $allowed_sort)) $sort_by = 'submission_time';
+$order = $order === 'DESC' ? 'DESC' : 'ASC';
+
+// Build SQL
+$sql = "SELECT 
+            s.name AS student_name,
+            o.status,
+            o.comment AS fa_comment,
+            CONCAT(o.date_out, ' ', o.time_out) AS submission_time
+        FROM outpass o
+        JOIN student s ON o.s_id = s.id
+        WHERE s.fa_id = ?";
 $params = [$fa_id];
 
 if ($student_name) {
@@ -38,86 +50,67 @@ if ($status) {
     $sql .= " AND o.status = ?";
     $params[] = $status;
 }
-if ($decision) {
-    $sql .= " AND f.decision = ?";
-    $params[] = $decision;
-}
 if ($date_from) {
-    $sql .= " AND o.submission_time >= ?";
+    $sql .= " AND o.date_out >= ?";
     $params[] = $date_from;
 }
 if ($date_to) {
-    $sql .= " AND o.submission_time <= ?";
+    $sql .= " AND o.date_out <= ?";
     $params[] = $date_to;
 }
-if ($r_no) {
-    $sql .= " AND s.r_no LIKE ?";
-    $params[] = "%$r_no%";
-}
-if ($date_out) {
-    $sql .= " AND o.date_out = ?";
-    $params[] = $date_out;
-}
-if ($date_in) {
-    $sql .= " AND o.date_in = ?";
-    $params[] = $date_in;
-}
-if ($reason) {
-    $sql .= " AND o.reason_for_leave LIKE ?";
-    $params[] = "%$reason%";
-}
 
-// Update allowed_sort
-$allowed_sort = [
-    'student_name', 'submission_time', 'status', 'fa_comment',
-    'r_no', 'date_out', 'date_in', 'reason_for_leave'
-];
-if (!in_array($sort_by, $allowed_sort)) $sort_by = 'submission_time';
-$order = strtoupper($order) === 'ASC' ? 'ASC' : 'DESC';
 $sql .= " ORDER BY $sort_by $order";
 
-// Prepare and execute
+// Execute
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Export PDF using TCPDF
 if ($export === 'pdf') {
-    require_once('fpdf/fpdf.php'); // Adjust path as needed
-
-    $pdf = new FPDF();
+    $pdf = new \TCPDF();
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('SRM FA Portal');
+    $pdf->SetTitle('Outpass Report');
+    $pdf->SetHeaderData('', 0, 'Outpass Report', '');
+    $pdf->setHeaderFont(Array('helvetica', '', 12));
+    $pdf->setFooterFont(Array('helvetica', '', 10));
+    $pdf->SetDefaultMonospacedFont('helvetica');
+    $pdf->SetMargins(10, 20, 10);
+    $pdf->SetAutoPageBreak(TRUE, 15);
     $pdf->AddPage();
-    $pdf->SetFont('Arial','B',12);
+    $pdf->SetFont('helvetica', '', 10);
 
-    // Table header
+    // Build HTML table
+    $html = '<h2>Outpass Report</h2><table border="1" cellpadding="4"><tr>';
     foreach(array_keys($rows[0]) as $header) {
-        $pdf->Cell(40,10,ucwords(str_replace('_',' ',$header)),1);
+        $html .= '<th>' . ucwords(str_replace('_',' ',$header)) . '</th>';
     }
-    $pdf->Ln();
-
-    // Table data
-    $pdf->SetFont('Arial','',10);
+    $html .= '</tr>';
     foreach($rows as $row) {
+        $html .= '<tr>';
         foreach($row as $cell) {
-            $pdf->Cell(40,10,$cell,1);
+            $html .= '<td>' . htmlspecialchars($cell ?? '') . '</td>';
         }
-        $pdf->Ln();
+        $html .= '</tr>';
     }
+    $html .= '</table>';
 
-    $pdf->Output('D', 'report.pdf');
+    $pdf->writeHTML($html, true, false, true, false, '');
+    $pdf->Output('report.pdf', 'D');
     exit;
 }
-if ($export === 'excel') {
-    require 'vendor/autoload.php'; // Adjust path as needed
-    use PhpOffice\PhpSpreadsheet\Spreadsheet;
-    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
+// Export Excel using PhpSpreadsheet
+if ($export === 'excel') {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
     // Header
     $col = 1;
     foreach(array_keys($rows[0]) as $header) {
-        $sheet->setCellValueByColumnAndRow($col, 1, ucwords(str_replace('_',' ',$header)));
+        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '1';
+        $sheet->setCellValue($cell, ucwords(str_replace('_',' ',$header)));
         $col++;
     }
 
@@ -125,8 +118,9 @@ if ($export === 'excel') {
     $rowNum = 2;
     foreach($rows as $row) {
         $col = 1;
-        foreach($row as $cell) {
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, $cell);
+        foreach($row as $cellValue) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $rowNum;
+            $sheet->setCellValue($cell, $cellValue);
             $col++;
         }
         $rowNum++;

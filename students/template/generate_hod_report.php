@@ -1,5 +1,10 @@
 <?php
 require_once 'db.php';
+require 'vendor/autoload.php'; // For PhpSpreadsheet
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 session_start();
 
 $hod_id = $_SESSION['user_id'] ?? $_GET['hod_id'] ?? null;
@@ -66,43 +71,49 @@ $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Export logic (optional)
-if ($export === 'pdf') {
-    require_once('fpdf/fpdf.php'); // Adjust path as needed
+if ($export === 'pdf') {// Adjust path if needed
 
-    $pdf = new FPDF();
+    $pdf = new \TCPDF();
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('SRM HOD Portal');
+    $pdf->SetTitle('Outpass Report');
+    $pdf->SetHeaderData('', 0, 'Outpass Report', '');
+    $pdf->setHeaderFont(Array('helvetica', '', 12));
+    $pdf->setFooterFont(Array('helvetica', '', 10));
+    $pdf->SetDefaultMonospacedFont('helvetica');
+    $pdf->SetMargins(10, 20, 10);
+    $pdf->SetAutoPageBreak(TRUE, 15);
     $pdf->AddPage();
-    $pdf->SetFont('Arial','B',12);
+    $pdf->SetFont('helvetica', '', 10);
 
-    // Table header
+    // Build HTML table
+    $html = '<h2>Outpass Report</h2><table border="1" cellpadding="4"><tr>';
     foreach(array_keys($rows[0]) as $header) {
-        $pdf->Cell(40,10,ucwords(str_replace('_',' ',$header)),1);
+        $html .= '<th>' . ucwords(str_replace('_',' ',$header)) . '</th>';
     }
-    $pdf->Ln();
-
-    // Table data
-    $pdf->SetFont('Arial','',10);
+    $html .= '</tr>';
     foreach($rows as $row) {
+        $html .= '<tr>';
         foreach($row as $cell) {
-            $pdf->Cell(40,10,$cell,1);
+            $html .= '<td>' . htmlspecialchars($cell) . '</td>';
         }
-        $pdf->Ln();
+        $html .= '</tr>';
     }
+    $html .= '</table>';
 
-    $pdf->Output('D', 'report.pdf');
+    $pdf->writeHTML($html, true, false, true, false, '');
+    $pdf->Output('report.pdf', 'D');
     exit;
 }
 if ($export === 'excel') {
-    require 'vendor/autoload.php'; // Adjust path as needed
-    use PhpOffice\PhpSpreadsheet\Spreadsheet;
-    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
     // Header
     $col = 1;
     foreach(array_keys($rows[0]) as $header) {
-        $sheet->setCellValueByColumnAndRow($col, 1, ucwords(str_replace('_',' ',$header)));
+        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '1';
+        $sheet->setCellValue($cell, ucwords(str_replace('_',' ',$header)));
         $col++;
     }
 
@@ -110,8 +121,9 @@ if ($export === 'excel') {
     $rowNum = 2;
     foreach($rows as $row) {
         $col = 1;
-        foreach($row as $cell) {
-            $sheet->setCellValueByColumnAndRow($col, $rowNum, $cell);
+        foreach($row as $cellValue) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $rowNum;
+            $sheet->setCellValue($cell, $cellValue);
             $col++;
         }
         $rowNum++;

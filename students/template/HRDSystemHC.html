@@ -40,6 +40,11 @@
             updateDateTime();
             fetchHCDetails(); // Fetch HC details
             fetchOutpassDetails(); // Fetch outpass details
+            fetchHostelBlocks(); // Fetch hostel blocks for the dropdown
+
+            $('#btnPreviewHCReport').on('click', function() { fetchHCReport(); });
+            $('#btnExportHCPDF').on('click', function() { fetchHCReport('pdf'); });
+            $('#btnExportHCExcel').on('click', function() { fetchHCReport('excel'); });
         });
 
         function fetchHCDetails() {
@@ -153,16 +158,11 @@
         }
 
         function fetchHCReport(exportType = '') {
-            // Validate required field
-            if (!$('#filterHostelBlock').val()) {
-                alert('Please select a Hostel Block.');
-                return;
-            }
             const params = {
-                hc_id: $('#user_id').val(),
                 hostel_block: $('#filterHostelBlock').val(),
                 status: $('#filterStatus').val(),
-                approval_date: $('#filterApprovalDate').val(),
+                date_out_from: $('#filterApprovalDateFrom').val(),
+                date_out_to: $('#filterApprovalDateTo').val(),
                 export: exportType
             };
             if (exportType) {
@@ -171,16 +171,31 @@
             }
             $.get('generate_hc_report.php', params, function(data) {
                 let rows = '';
-                data.forEach(row => {
-                    rows += `<tr>
-                        <td>${row.student_name}</td>
-                        <td>${row.hostel_block}</td>
-                        <td>${row.approval_date}</td>
-                        <td>${row.return_date} ${row.return_time}</td>
-                        <td>${row.status}</td>
-                    </tr>`;
-                });
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(row => {
+                        rows += `<tr>
+                            <td>${row.student_name}</td>
+                            <td>${row.register_no}</td>
+                            <td>${row.hostel_block}</td>
+                            <td>${row.date_out}</td>
+                            <td>${row.date_in}</td>
+                            <td>${row.status}</td>
+                        </tr>`;
+                    });
+                } else {
+                    rows = '<tr><td colspan="6" class="text-center">No records found.</td></tr>';
+                }
                 $('#hcReportPreview tbody').html(rows);
+            }, 'json');
+        }
+
+        function fetchHostelBlocks() {
+            $.get('generate_hc_report.php?get_hostel_blocks=1', function(data) {
+                var $dropdown = $('#filterHostelBlock');
+                $dropdown.empty().append('<option value="">All</option>');
+                data.forEach(function(block) {
+                    $dropdown.append($('<option>', { value: block, text: block }));
+                });
             }, 'json');
         }
 
@@ -325,10 +340,6 @@
                                                 <label>Hostel Block <span class="text-danger">*</span></label>
                                                 <select class="form-control" id="filterHostelBlock" name="hostel_block" required>
                                                     <option value="">Select Block</option>
-                                                    <option value="A">Block A</option>
-                                                    <option value="B">Block B</option>
-                                                    <option value="C">Block C</option>
-                                                    <!-- Add more blocks as needed -->
                                                 </select>
                                             </div>
                                             <div class="form-group col-md-3">
@@ -341,8 +352,12 @@
                                                 </select>
                                             </div>
                                             <div class="form-group col-md-3">
-                                                <label>Approval Date</label>
-                                                <input type="date" class="form-control" id="filterApprovalDate" name="approval_date">
+                                                <label>Approval Date (From)</label>
+                                                <input type="date" class="form-control" id="filterApprovalDateFrom" name="approval_date_from">
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <label>Approval Date (To)</label>
+                                                <input type="date" class="form-control" id="filterApprovalDateTo" name="approval_date_to">
                                             </div>
                                             <div class="form-group col-md-3">
                                                 <button type="button" class="btn btn-primary" id="btnPreviewHCReport">Preview</button>
@@ -355,9 +370,10 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Student Name</th>
+                                                        <th>Register No.</th>
                                                         <th>Hostel Block</th>
-                                                        <th>Approval Date</th>
-                                                        <th>Return Date/Time</th>
+                                                        <th>Date Out</th>
+                                                        <th>Date In</th>
                                                         <th>Status</th>
                                                     </tr>
                                                 </thead>

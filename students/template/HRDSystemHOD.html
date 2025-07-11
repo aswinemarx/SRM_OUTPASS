@@ -11,10 +11,11 @@
     <link href="customstyle.css" rel="stylesheet">
     <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
     <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
-    <script src="bootstrap.bundle.min.js"></script>
+    
     <script src="jquery.easing.min.js"></script>
     <script src="main.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
 
     <script>
         function updateDateTime() {
@@ -190,11 +191,13 @@
                 order: 'ASC',
                 export: exportType
             };
+            console.log("Fetching report with params:", params); // Add this line
             if (exportType) {
                 window.open('generate_hod_report.php?' + $.param(params), '_blank');
                 return;
             }
             $.get('generate_hod_report.php', params, function(data) {
+                console.log("Report data:", data); // Add this line
                 let rows = '';
                 if (Array.isArray(data) && data.length > 0) {
                     data.forEach(row => {
@@ -213,20 +216,22 @@
             }, 'json');
         }
 
-        $('#btnPreviewHODReport, #btnExportHODPDF, #btnExportHODExcel').on('click', function() {
-            // Validate required fields
-            if (!$('#filterStatus').val() || !$('#filterFromDate').val() || !$('#filterToDate').val()) {
-                alert('Please select Status, From, and To dates.');
-                return;
-            }
-            let exportType = '';
-            if (this.id === 'btnExportHODPDF') exportType = 'pdf';
-            if (this.id === 'btnExportHODExcel') exportType = 'excel';
-            fetchHODReport(exportType);
-        });
+        $(document).ready(function() {
+            $('#btnPreviewHODReport, #btnExportHODPDF, #btnExportHODExcel').on('click', function() {
+                // Validate required fields
+                if (!$('#filterStatus').val() || !$('#filterFromDate').val() || !$('#filterToDate').val()) {
+                    alert('Please select Status, From, and To dates.');
+                    return;
+                }
+                let exportType = '';
+                if (this.id === 'btnExportHODPDF') exportType = 'pdf';
+                if (this.id === 'btnExportHODExcel') exportType = 'excel';
+                fetchHODReport(exportType);
+            });
 
-        $('#hodReportFilterForm input, #hodReportFilterForm select').on('change', function() {
-            fetchHODReport();
+            $('#hodReportFilterForm input, #hodReportFilterForm select').on('change', function() {
+                fetchHODReport();
+            });
         });
     </script>
 </head>
@@ -243,12 +248,12 @@
             <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
 
             <ul class="navbar-nav align-items-center ml-auto text-center">
-                <a style='cursor:pointer;'>
-                    <span class="dropdown-item" data-toggle="modal" data-target="#logoutModal">
-                        <div class="dropdown-item-icon"><i class="fas fa-sign-out-alt"></i></div>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#logoutModal" style="cursor:pointer;">
+                        <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
                         Logout
-                    </span>
-                </a>
+                    </a>
+                </li>
             </ul>
         </nav>
 

@@ -227,16 +227,11 @@
 
         function fetchFAReport(exportType = '') {
             const params = {
-                fa_id: $('#user_id').val(),
+                fa_id: $('#fa_id').val(), // Make sure this input exists and is set
                 student_name: $('#filterStudentName').val(),
                 status: $('#filterStatus').val(),
                 date_from: $('#filterFromDate').val(),
                 date_to: $('#filterToDate').val(),
-                decision: $('#filterDecision').val(),
-                r_no: $('#filterRegisterNo').val(),
-                date_out: $('#filterDateOut').val(),
-                date_in: $('#filterDateIn').val(),
-                reason: $('#filterReason').val(),
                 sort_by: $('#filterSortBy').val(),
                 order: 'ASC',
                 export: exportType
@@ -250,29 +245,35 @@
             // Preview in table
             $.get('generate_fa_report.php', params, function(data) {
                 let rows = '';
-                data.forEach(row => {
-                    rows += `<tr>
-                        <td>${row.student_name}</td>
-                        <td>${row.submission_time}</td>
-                        <td>${row.status}</td>
-                        <td>${row.fa_comment || ''}</td>
-                    </tr>`;
-                });
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(row => {
+                        rows += `<tr>
+                            <td>${row.student_name}</td>
+                            <td>${row.submission_time || ''}</td>
+                            <td>${row.status}</td>
+                            <td>${row.fa_comment || ''}</td>
+                        </tr>`;
+                    });
+                } else {
+                    rows = '<tr><td colspan="4" class="text-center">No records found.</td></tr>';
+                }
                 $('#faReportPreview tbody').html(rows);
             }, 'json');
         }
 
-        $('#btnPreviewReport, #btnExportPDF, #btnExportExcel').on('click', function(e) {
-            // Validate required fields
-            if (!$('#filterStudentName').val() || !$('#filterFromDate').val() || !$('#filterToDate').val()) {
-                alert('Please fill all required fields: Student Name, From, and To.');
-                return;
-            }
-            // Determine export type
-            let exportType = '';
-            if (this.id === 'btnExportPDF') exportType = 'pdf';
-            if (this.id === 'btnExportExcel') exportType = 'excel';
-            fetchFAReport(exportType);
+        $(document).ready(function() {
+            $('#btnPreviewReport, #btnExportPDF, #btnExportExcel').on('click', function(e) {
+                // Validate required fields
+                if (!$('#filterFromDate').val() || !$('#filterToDate').val()) {
+                    alert('Please fill both required fields: From and To.');
+                    return;
+                }
+                // Determine export type
+                let exportType = '';
+                if (this.id === 'btnExportPDF') exportType = 'pdf';
+                if (this.id === 'btnExportExcel') exportType = 'excel';
+                fetchFAReport(exportType);
+            });
         });
 
         // Optionally, trigger preview on filter change:
@@ -430,8 +431,8 @@
                                     <div class="card-body py-2">
                                         <form id="faReportFilters" class="form-row align-items-end">
                                             <div class="form-group col-md-2">
-                                                <label>Student Name <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="filterStudentName" required>
+                                                <label>Student Name </label>
+                                                <input type="text" class="form-control" id="filterStudentName">
                                             </div>
                                             <div class="form-group col-md-2">
                                                 <label>Status</label>
@@ -451,14 +452,6 @@
                                                 <input type="date" class="form-control" id="filterToDate" required>
                                             </div>
                                             <div class="form-group col-md-2">
-                                                <label>Decision</label>
-                                                <select class="form-control" id="filterDecision">
-                                                    <option value="">All</option>
-                                                    <option value="approved">Approved</option>
-                                                    <option value="declined">Declined</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-2">
                                                 <label>Sort By</label>
                                                 <select class="form-control" id="filterSortBy">
                                                     <option value="submission_time">Submission Time</option>
@@ -470,22 +463,6 @@
                                                     <option value="date_in">Date (In)</option>
                                                     <option value="reason_for_leave">Reason</option>
                                                 </select>
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label>Register No.</label>
-                                                <input type="text" class="form-control" id="filterRegisterNo">
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label>Date (Out)</label>
-                                                <input type="date" class="form-control" id="filterDateOut">
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label>Date (In)</label>
-                                                <input type="date" class="form-control" id="filterDateIn">
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label>Reason</label>
-                                                <input type="text" class="form-control" id="filterReason">
                                             </div>
                                             <div class="form-group col-md-2">
                                                 <button type="button" class="btn btn-primary" id="btnPreviewReport">Preview</button>
@@ -530,6 +507,7 @@
         <input type="hidden" id="hdnFormDetails" name="hdnFormDetails" value="1">
         <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
         <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM" />
+        <input type="hidden" id="fa_id" value="<?php echo htmlspecialchars($_SESSION['fa_id'] ?? ''); ?>">
     </form>
 
     <!-- Logout Modal-->
