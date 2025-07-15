@@ -90,9 +90,10 @@
 
         function fetchAdminReport(exportType = '') {
             const params = {
-                role: $('#filterRole').val(),
                 department: $('#filterDepartment').val(),
                 status: $('#filterStatus').val(),
+                r_no: $('#filterRegisterNo').val(),
+                year: $('#filterYear').val(),
                 date_from: $('#filterFromDate').val(),
                 date_to: $('#filterToDate').val(),
                 sort_by: $('#filterSortBy').val(),
@@ -107,27 +108,30 @@
                 let rows = '';
                 data.forEach(row => {
                     rows += `<tr>
-                <td>${row.role}</td>
-                <td>${row.student_name}</td>
-                <td>${row.department}</td>
-                <td>${row.status}</td>
-                <td>${row.submission_date}</td>
-            </tr>`;
+        <td>${row.student_name}</td>
+        <td>${row.department}</td>
+        <td>${row.r_no}</td>
+        <td>${row.year}</td>
+        <td>${row.status}</td>
+        <td>${row.submission_date}</td>
+    </tr>`;
                 });
                 $('#adminReportPreview tbody').html(rows);
             }, 'json');
         }
 
-        $('#btnPreviewAdminReport, #btnExportAdminPDF, #btnExportAdminExcel').on('click', function () {
-            // Validate required fields
-            if (!$('#filterRole').val() || !$('#filterFromDate').val() || !$('#filterToDate').val()) {
-                alert('Please select Role, From, and To dates.');
-                return;
-            }
-            let exportType = '';
-            if (this.id === 'btnExportAdminPDF') exportType = 'pdf';
-            if (this.id === 'btnExportAdminExcel') exportType = 'excel';
-            fetchAdminReport(exportType);
+        $(document).ready(function () {
+            $('#btnPreviewAdminReport, #btnExportAdminPDF, #btnExportAdminExcel').on('click', function () {
+                // Validate required fields
+                if (!$('#filterFromDate').val() || !$('#filterToDate').val()) {
+                    alert('Please select From and To dates.');
+                    return;
+                }
+                let exportType = '';
+                if (this.id === 'btnExportAdminPDF') exportType = 'pdf';
+                if (this.id === 'btnExportAdminExcel') exportType = 'excel';
+                fetchAdminReport(exportType);
+            });
         });
 
         $('#adminReportFilterForm input, #adminReportFilterForm select').on('change', function () {
@@ -219,16 +223,7 @@
                             <div id="adminReportFilters" class="collapse show">
                                 <div class="card-body py-2">
                                     <form class="form-row align-items-end" id="adminReportFilterForm">
-                                        <div class="form-group col-md-2">
-                                            <label>Role <span class="text-danger">*</span></label>
-                                            <select class="form-control" id="filterRole" required>
-                                                <option value="">Select Role</option>
-                                                <option value="Student">Student</option>
-                                                <option value="FA">Faculty Advisor</option>
-                                                <option value="HOD">HOD</option>
-                                                <option value="HC">Hostel Coordinator</option>
-                                            </select>
-                                        </div>
+                                        
                                         <div class="form-group col-md-2">
                                             <label>Department</label>
                                             <input type="text" class="form-control" id="filterDepartment" placeholder="Department">
@@ -282,7 +277,6 @@
                             <table class="table table-bordered" id="adminReportPreview">
                                 <thead>
                                     <tr>
-                                        <th>Role</th>
                                         <th>Student Name</th>
                                         <th>Department</th>
                                         <th>Status</th>
