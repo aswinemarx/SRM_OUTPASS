@@ -11,455 +11,419 @@
     <link href="customstyle.css" rel="stylesheet">
     <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
     <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
-    <script src="jquery.min.js"></script>
-    <script src="bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Only one Bootstrap JS include -->
+    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
     <script src="jquery.easing.min.js"></script>
     <script src="main.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <script>
-        function updateDateTime() {
-            var now = new Date();
-            var options = {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            };
-            var formattedDateTime = now.toLocaleDateString('en-GB', options).replace(',', '');
-            document.getElementById('currentDateTime').textContent = formattedDateTime;
+    <style>
+        body { background: #f8f9fa; font-size: 1rem; }
+        .navbar {
+            z-index: 1050;
+            font-size: 1rem;
         }
-
-        setInterval(updateDateTime, 1000);
-
-        $(document).ready(function () {
-            updateDateTime();
-            fetchHCDetails(); // Fetch HC details
-            fetchOutpassDetails(); // Fetch outpass details
-            fetchHostelBlocks(); // Fetch hostel blocks for the dropdown
-
-            $('#btnPreviewHCReport').on('click', function() { fetchHCReport(); });
-            $('#btnExportHCPDF').on('click', function() { fetchHCReport('pdf'); });
-            $('#btnExportHCExcel').on('click', function() { fetchHCReport('excel'); });
-        });
-
-        function fetchHCDetails() {
-            var userId = $('#user_id').val();
-            $.ajax({
-                url: 'fetch_hc_details.php',
-                method: 'GET',
-                data: { hc_id: userId }, // Replace with the actual HC ID
-                success: function (data) {
-                    console.log("Fetched HC details:", data);
-
-                    if (data.error) {
-                        alert("Error: " + data.error);
-                        return;
-                    }
-
-                    $('#hcName').text(data.name);
-                    $('#hcEmailId').text(data.email);
-                    $('#hcDepartment').text(data.dept);
-                },
-                error: function (xhr, status, error) {
-                    alert("Error fetching HC details from the server.");
-                }
-            });
+        .navbar-brand img { height: 36px; max-width: 120px; }
+        .sidebar-hc {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            bottom: 0;
+            width: 220px;
+            background: #fff;
+            border-right: 1px solid #e3e6f0;
+            padding-top: 1rem;
+            z-index: 1040;
+            transition: left 0.3s;
         }
-
-        function fetchOutpassDetails() {
-            $.ajax({
-                url: 'fetch_outpass_by_hc.php', // Ensure this is the correct path to your PHP file
-                method: 'GET',
-                success: function (data) {
-                    console.log("Fetched Outpass Details:", data);
-
-                    if (data.error) {
-                        alert("Error: " + data.error);
-                        return;
-                    }
-
-                    // Populate the table with outpass data
-                    var tbody = $('#outpassTable tbody');
-                    tbody.empty(); // Clear existing rows
-                    if (data.message) {
-                        tbody.append('<tr><td colspan="10" class="text-center">' + data.message + '</td></tr>');
-                        return;
-                    }
-
-                    data.forEach(function (outpass) {
-                        var row = `<tr>
-                            <td>${outpass.student_name}</td>
-                            <td>${outpass.faculty_name || 'N/A'}</td>
-                            <td>${outpass.comment || 'N/A'}</td>
-                            <td>${outpass.r_no}</td>
-                            <td>${outpass.date_out}</td>
-                            <td>${outpass.time_out}</td>
-                            <td>${outpass.date_in}</td>
-                            <td>${outpass.time_in}</td>
-                            <td>${outpass.reason}</td>
-                            <td>
-                                <button class="btn btn-success" onclick="approveOutpass(${outpass.outpass_id})">Approve</button>
-                                <button class="btn btn-danger" onclick="declineOutpass(${outpass.outpass_id})">Decline</button>
-                            </td>
-                        </tr>`;
-                        tbody.append(row);
-                    });
-                },
-                error: function (xhr, status, error) {
-                    console.error("Error fetching outpass details:", error);
-                    alert("Error fetching outpass details from the server.");
-                }
-            });
+        .sidebar-hc .nav-link {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            transition: background 0.2s, color 0.2s;
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
         }
-
-        function approveOutpass(outpassId) {
-            $.ajax({
-                url: 'approve_decline_hc.php',
-                method: 'POST',
-                data: {
-                    outpass_id: outpassId,
-                    comment: '', // No comment required
-                    action: 'approve'
-                },
-                success: function (response) {
-                    alert(response.message || "Outpass approved successfully!");
-                    fetchOutpassDetails(); // Refresh the table
-                },
-                error: function (xhr, status, error) {
-                    console.error("Error approving outpass:", error);
-                    alert("Error approving outpass.");
-                }
-            });
+        .sidebar-hc .nav-link.active, .sidebar-hc .nav-link:focus, .sidebar-hc .nav-link:hover {
+            background: #e9ecef;
+            color: #007bff;
+            outline: none;
         }
-
-        function declineOutpass(outpassId) {
-            $.ajax({
-                url: 'approve_decline_hc.php',
-                method: 'POST',
-                data: {
-                    outpass_id: outpassId,
-                    comment: '', // No comment required
-                    action: 'decline'
-                },
-                success: function (response) {
-                    alert(response.message || "Outpass declined successfully!");
-                    fetchOutpassDetails(); // Refresh the table
-                },
-                error: function (xhr, status, error) {
-                    console.error("Error declining outpass:", error);
-                    alert("Error declining outpass.");
-                }
-            });
+        #sidebarOverlayHC {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.2);
+            z-index: 1041;
         }
-
-        function fetchHCReport(exportType = '') {
-            const params = {
-                hostel_block: $('#filterHostelBlock').val(),
-                status: $('#filterStatus').val(),
-                date_out_from: $('#filterApprovalDateFrom').val(),
-                date_out_to: $('#filterApprovalDateTo').val(),
-                export: exportType
-            };
-            if (exportType) {
-                window.open('generate_hc_report.php?' + $.param(params), '_blank');
-                return;
+        .main-content-hc {
+            margin-left: 220px;
+            padding: 88px 16px 32px 16px;
+            transition: margin-left 0.3s;
+        }
+        @media (max-width: 991.98px) {
+            .sidebar-hc {
+                left: -220px;
+                width: 220px;
+                top: 56px;
+                height: calc(100vh - 56px);
             }
-            $.get('generate_hc_report.php', params, function(data) {
-                let rows = '';
-                if (Array.isArray(data) && data.length > 0) {
-                    data.forEach(row => {
-                        rows += `<tr>
-                            <td>${row.student_name}</td>
-                            <td>${row.register_no}</td>
-                            <td>${row.hostel_block}</td>
-                            <td>${row.date_out}</td>
-                            <td>${row.date_in}</td>
-                            <td>${row.status}</td>
-                        </tr>`;
-                    });
-                } else {
-                    rows = '<tr><td colspan="6" class="text-center">No records found.</td></tr>';
-                }
-                $('#hcReportPreview tbody').html(rows);
-            }, 'json');
+            .sidebar-hc.show {
+                left: 0;
+            }
+            .main-content-hc {
+                margin-left: 0;
+                padding: 80px 4px 24px 4px;
+            }
+            #sidebarToggle {
+                display: inline-block !important;
+            }
+            #sidebarOverlayHC.show {
+                display: block;
+            }
         }
-
-        function fetchHostelBlocks() {
-            $.get('generate_hc_report.php?get_hostel_blocks=1', function(data) {
-                var $dropdown = $('#filterHostelBlock');
-                $dropdown.empty().append('<option value="">All</option>');
-                data.forEach(function(block) {
-                    $dropdown.append($('<option>', { value: block, text: block }));
-                });
-            }, 'json');
+        @media (min-width: 992px) {
+            #sidebarToggle, #sidebarOverlayHC { display: none !important; }
         }
-
-        $('#btnPreviewHCReport').on('click', function() { fetchHCReport(); });
-        $('#btnExportHCPDF').on('click', function() { fetchHCReport('pdf'); });
-        $('#btnExportHCExcel').on('click', function() { fetchHCReport('excel'); });
-
-        $('#hcReportFilterForm input, #hcReportFilterForm select').on('change', function() {
-            fetchHCReport();
-        });
-    </script>
+        .card { border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 2rem; }
+        .card-header, .card-body { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .card-body { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+        /* Navbar heading center on desktop, left on mobile */
+        .navbar-title-center {
+            margin: 0 auto;
+            text-align: center;
+        }
+        @media (max-width: 991.98px) {
+            .navbar-title-center {
+                margin: 0;
+                text-align: left;
+            }
+        }
+        /* Table responsiveness and sticky headers */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table th, .table td {
+            min-width: 120px;
+            white-space: nowrap;
+            vertical-align: middle !important;
+            font-size: 1rem;
+        }
+        @media (min-width: 992px) {
+            .table thead th.sticky-top, .table thead th {
+                position: sticky;
+                top: 0;
+                z-index: 2;
+                background: #f8f9fa;
+            }
+        }
+        .action-btns .btn {
+            min-width: 90px;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            font-size: 1rem;
+        }
+        .action-btns .btn:last-child {
+            margin-right: 0;
+        }
+        /* Filter form responsive layout */
+        #hcReportFilterForm .form-group {
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 991.98px) {
+            #hcReportFilterForm {
+                flex-direction: column !important;
+                gap: 0.5rem;
+            }
+            #hcReportFilterForm .form-group {
+                width: 100% !important;
+                min-width: 100%;
+            }
+            #hcReportFilterForm .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+        @media (min-width: 992px) {
+            #hcReportFilterForm {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            #hcReportFilterForm .form-group {
+                flex: 1 1 180px;
+                min-width: 140px;
+            }
+            #hcReportFilterForm .btn {
+                min-width: 120px;
+            }
+        }
+        /* Modal polish */
+        .modal-content { border-radius: 0.75rem; }
+        .modal-header, .modal-footer { border: none; }
+        .modal .form-control { font-size: 1rem; }
+        /* General spacing for cards, forms, tables */
+        .form-control, .btn { font-size: 1rem; }
+        .mb-2 { margin-bottom: 0.5rem !important; }
+        .mb-4 { margin-bottom: 1.5rem !important; }
+        .mt-3 { margin-top: 1rem !important; }
+    </style>
 </head>
-
 <body class="nav-fixed" onload="updateDateTime()">
     <form id="userHomePage" name="userHomePage" method="post">
-        <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
-            <button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle"><i class="fa fa-bars"></i></button>
-            <a class="navbar-brand" href="../../faculty/loginManager/UserHomePage.jsp">
-                <img src="../../resources/Image/srmist.png" alt="SRM Logo" />
-                <br><font style="font-size: 9pt;">Coordinator Portal</font>
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+            <button class="btn btn-link d-lg-none" id="sidebarToggle" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="../../resources/Image/srmist.png" alt="SRM Logo" class="mr-2" />
+                <span class="ml-2" style="font-size: 12px;">Coordinator Portal</span>
             </a>
-            <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
-
-            <ul class="navbar-nav align-items-center ml-auto text-center">
-                <a style='cursor:pointer;'>
-                    <span class="dropdown-item" data-toggle="modal" data-target="#logoutModal">
-                        <div class="dropdown-item-icon"><i class="fas fa-sign-out-alt"></i></div>
-                        Logout
-                    </span>
-                </a>
-            </ul>
-        </nav>
-
-        <div id="layoutSidenav">
-            <div id="layoutSidenav_nav">
-                <nav class="sidenav shadow-right sidenav-light">
-                    <div class="sidenav-menu">
-                        <div class="nav accordion" id="accordionSidenav">
-                            <!-- Removed Dashboard Link -->
-                            <a class="nav-link" data-toggle="modal" data-target="#logoutModal">
-                                <div class="nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
-                                Logout
-                            </a>
-                        </div>
-                    </div>
-                    <div class="sidenav-footer">
-                        <div class="sidenav-footer-content">
-                            <div class="sidenav-footer-title" id="currentDateTime"></div>
-                        </div>
-                        <input type="hidden" style="color:white;" id="hidchkHostelOpen" name="hidchkHostelOpen" size="10" value="''">
-                    </div>
-                </nav>
+            <div class="navbar-title-center flex-grow-1 d-none d-lg-block">
+                <span class="h5 mb-0 text-primary font-weight-bold">SRM Hostel Coordinator Dashboard</span>
             </div>
-            <div id="layoutSidenav_content">
-                <main>
-                    <div class="container-fluid">
-                        <div class="row justify-content-center">
-                            <div class="col-md-8">
-                                <div class="card border-custom mb-2 mt-1">
-                                    <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Coordinator Profile</div>
-                                    <div class="card-body py-1">
-                                        <table class="table table-borderless mb-0">
+            <div class="ml-auto d-lg-none">
+                <span class="h6 mb-0 text-primary font-weight-bold">SRM Hostel Coordinator Dashboard</span>
+            </div>
+        </nav>
+        <div id="sidebarOverlayHC"></div>
+        <nav class="sidebar-hc d-flex flex-column" id="sidebarNavHC" aria-label="Sidebar Navigation">
+            <a class="nav-link" href="hc_home.html"><i class="fa fa-home mr-2"></i>Home</a>
+            <a class="nav-link" href="hc_outpasses.html"><i class="fa fa-file-alt mr-2"></i>Student Outpasses</a>
+            <a class="nav-link" href="hc_report.html"><i class="fa fa-file-export mr-2"></i>Generate Report</a>
+            <a class="nav-link" data-toggle="modal" data-target="#logoutModal"><i class="fa fa-sign-out-alt mr-2"></i>Logout</a>
+        </nav>
+        <div id="layoutSidenav_content">
+            <main class="main-content-hc">
+                <div class="container-fluid">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card border-custom mb-2 mt-1">
+                                <div class="card-header bg-custom text-white"><i class="fa fa-tachometer-alt"></i> Coordinator Profile</div>
+                                <div class="card-body py-1">
+                                    <table class="table table-borderless mb-0">
+                                        <tbody>
+                                            <tr class="border-bottom">
+                                                <td style="width: 30%">
+                                                    Coordinator Name
+                                                </td>
+                                                <td>
+                                                    <div class="font-weight-bold font-weight-700 text-custom" id="hcName"></div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-bottom">
+                                                <td>
+                                                    Email ID
+                                                </td>
+                                                <td>
+                                                    <div class="font-weight-bold font-weight-700 text-custom" id="hcEmailId"></div>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-bottom">
+                                                <td>
+                                                    Institution
+                                                </td>
+                                                <td>
+                                                    <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
+                                                </td>
+                                            </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-custom mb-4">
+                                <div class="card-body text-center">
+                                    <div id="divImage">
+                                        <img class="img-account-profile mb-2 imgPhoto" src="hc_photo.jpg" alt="Coordinator Photo" style="height: 150px;width:150px;">
+                                    </div>
+                                    <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div>
+                                    <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="container-fluid">
+                    <div class="row justify-content-center">
+                        <div class="col-md-12">
+                            <div class="card border-custom mb-4">
+                                <div class="card-header bg-custom text-white"><i class="fa fa-file-alt"></i> Student Outpasses</div>
+                                <div class="card-body py-1">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" id="outpassTable">
+                                            <thead class="thead-light sticky-top">
+                                                <tr>
+                                                    <th>Student Name</th>
+                                                    <th>Faculty Name</th>
+                                                    <th>Faculty comment</th>
+                                                    <th>Register No.</th>
+                                                    <th>Date (Out)</th>
+                                                    <th>Time (Out)</th>
+                                                    <th>Date (In)</th>
+                                                    <th>Time (In)</th>
+                                                    <th>Reason</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>
-                                                <tr class="border-bottom">
-                                                    <td style="width: 30%">
-                                                        Coordinator Name
-                                                    </td>
-                                                    <td>
-                                                        <div class="font-weight-bold font-weight-700 text-custom" id="hcName"></div>
-                                                    </td>
-                                                </tr>
-                                                <tr class="border-bottom">
-                                                    <td>
-                                                        Email ID
-                                                    </td>
-                                                    <td>
-                                                        <div class="font-weight-bold font-weight-700 text-custom" id="hcEmailId"></div>
-                                                    </td>
-                                                </tr>
-                                                <tr class="border-bottom">
-                                                    <td>
-                                                        Institution
-                                                    </td>
-                                                    <td>
-                                                        <div class="font-weight-bold">Faculty of Engineering and Technology, Ramapuram, Chennai</div>
-                                                    </td>
-                                                </tr>
-                                                
+                                                <!-- Outpass data will be appended here by JavaScript -->
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="card border-custom mb-4">
-                                    <div class="card-body text-center">
-                                        <div id="divImage">
-                                            <img class="img-account-profile mb-2 imgPhoto" src="hc_photo.jpg" alt="Coordinator Photo" style="height: 150px;width:150px;">
+                            <!-- Generate Outpass Report Section (SEPARATE CARD) -->
+                            <div class="card border-custom mb-4">
+                                <div class="card-header bg-custom text-white"><i class="fa fa-file-export"></i> Generate Outpass Report</div>
+                                <div class="card-body py-2">
+                                    <form class="form-row align-items-end g-2" id="hcReportFilterForm">
+                                        <div class="form-group col-12 col-md-3">
+                                            <label>Hostel Block <span class="text-danger">*</span></label>
+                                            <select class="form-control w-100" id="filterHostelBlock" name="hostel_block" required>
+                                                <option value="">Select Block</option>
+                                            </select>
                                         </div>
-                                        <div class="large font-weight-bold text-custom text-center mb-4">  Current Status: Active</div>
-                                        <div><img src="../../resources/Image/refresh.png" alt="Click here to reload the photo" style="cursor: pointer;height: 30px;width:30px;" title="Reload Photo" onclick="funReloadImage()"></div>
+                                        <div class="form-group col-12 col-md-3">
+                                            <label>Status</label>
+                                            <select class="form-control w-100" id="filterStatus" name="status">
+                                                <option value="">All</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="approved">Approved</option>
+                                                <option value="declined">Declined</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-12 col-md-3">
+                                            <label>Approval Date (From)</label>
+                                            <input type="date" class="form-control w-100" id="filterApprovalDateFrom" name="approval_date_from">
+                                        </div>
+                                        <div class="form-group col-12 col-md-3">
+                                            <label>Approval Date (To)</label>
+                                            <input type="date" class="form-control w-100" id="filterApprovalDateTo" name="approval_date_to">
+                                        </div>
+                                        <div class="form-group col-12 d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-primary mb-2 mb-md-0 mr-md-2" id="btnPreviewHCReport">Preview</button>
+                                            <button type="button" class="btn btn-success mb-2 mb-md-0 mr-md-2" id="btnExportHCPDF">Export PDF</button>
+                                            <button type="button" class="btn btn-info mb-2 mb-md-0" id="btnExportHCExcel">Export Excel</button>
+                                        </div>
+                                    </form>
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-bordered" id="hcReportPreview">
+                                            <thead class="thead-light sticky-top">
+                                                <tr>
+                                                    <th>Student Name</th>
+                                                    <th>Register No.</th>
+                                                    <th>Hostel Block</th>
+                                                    <th>Date Out</th>
+                                                    <th>Date In</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Preview data will be inserted here -->
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="container-fluid">
-                        <div class="row justify-content-center">
-                            <div class="col-md-12">
-                                <div class="card border-custom mb-4">
-                                    <div class="card-header bg-custom text-white"><i class="fa fa-file-alt"></i> Student Outpasses</div>
-                                    <div class="card-body py-1">
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered" id="outpassTable">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Student Name</th>
-                                                        <th>Faculty Name</th>
-                                                        <th>Faculty comment</th>
-                                                        <th>Register No.</th>
-                                                        <th>Date (Out)</th>
-                                                        <th>Time (Out)</th>
-                                                        <th>Date (In)</th>
-                                                        <th>Time (In)</th>
-                                                        <th>Reason</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Outpass data will be appended here by JavaScript -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Generate Outpass Report Section (SEPARATE CARD) -->
-                                <div class="card border-custom mb-4">
-                                    <div class="card-header bg-custom text-white"><i class="fa fa-file-export"></i> Generate Outpass Report</div>
-                                    <div class="card-body py-2">
-                                        <form class="form-row align-items-end" id="hcReportFilterForm">
-                                            <div class="form-group col-md-3">
-                                                <label>Hostel Block <span class="text-danger">*</span></label>
-                                                <select class="form-control" id="filterHostelBlock" name="hostel_block" required>
-                                                    <option value="">Select Block</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <label>Status</label>
-                                                <select class="form-control" id="filterStatus" name="status">
-                                                    <option value="">All</option>
-                                                    <option value="pending">Pending</option>
-                                                    <option value="approved">Approved</option>
-                                                    <option value="declined">Declined</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <label>Approval Date (From)</label>
-                                                <input type="date" class="form-control" id="filterApprovalDateFrom" name="approval_date_from">
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <label>Approval Date (To)</label>
-                                                <input type="date" class="form-control" id="filterApprovalDateTo" name="approval_date_to">
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <button type="button" class="btn btn-primary" id="btnPreviewHCReport">Preview</button>
-                                                <button type="button" class="btn btn-success" id="btnExportHCPDF">Export PDF</button>
-                                                <button type="button" class="btn btn-info" id="btnExportHCExcel">Export Excel</button>
-                                            </div>
-                                        </form>
-                                        <div class="table-responsive mt-3">
-                                            <table class="table table-bordered" id="hcReportPreview">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Student Name</th>
-                                                        <th>Register No.</th>
-                                                        <th>Hostel Block</th>
-                                                        <th>Date Out</th>
-                                                        <th>Date In</th>
-                                                        <th>Status</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Preview data will be inserted here -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+            </main>
+            <footer class="footer mt-auto footer-light">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6 small"></div>
                     </div>
-                </main>
-                <footer class="footer mt-auto footer-light">
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-6 small"></div>
-                        </div>
-                    </div>
-                </footer>
-            </div>
-        </div>
-
-        <input type="hidden" id="hdnFormStatus" name="hdnFormStatus" value="0">
-        <input type="hidden" id="hdnFormId" name="hdnFormId" value="1">
-        <input type="hidden" id="hdnFormDetails" name="hdnFormDetails" value="1">
-        <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
-        <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM" />
-    </form>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span class="text-white" aria-hidden="true">×</span>
-                    </button>
                 </div>
-                <div class="modal-body">
-                    Are you sure to logout?
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-custom lift" href="login.html">Logout</a>
-                </div>
-            </div>
+            </footer>
         </div>
     </div>
 
-    <!-- Forgot Password Modal -->
-    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" role="dialog" aria-labelledby="forgotPasswordLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <form id="forgotPasswordForm">
-          <div class="modal-content">
+    <input type="hidden" id="hdnFormStatus" name="hdnFormStatus" value="0">
+    <input type="hidden" id="hdnFormId" name="hdnFormId" value="1">
+    <input type="hidden" id="hdnFormDetails" name="hdnFormDetails" value="1">
+    <input type="hidden" id="hdnFilename" name="hdnFilename" value="">
+    <input type="hidden" name="csrfPreventionSalt" id="csrfPreventionSalt" value="7i2jLs34yt0RfSKX05UM" />
+</form>
+
+<!-- Logout Modal-->
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="forgotPasswordLabel">Forgot Password</h5>
-              <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
+                <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span class="text-white" aria-hidden="true">×</span>
+                </button>
             </div>
             <div class="modal-body">
-              <div class="form-group">
-                <label for="fpRegNo">Register Number</label>
-                <input type="text" class="form-control" id="fpRegNo" name="r_no" required>
-              </div>
-              <div class="form-group">
-                <label for="fpPhone">Phone Number</label>
-                <input type="text" class="form-control" id="fpPhone" name="p_no" required>
-              </div>
-              <div class="form-group">
-                <label for="fpEmail">College Mail ID</label>
-                <input type="email" class="form-control" id="fpEmail" name="w_mail" required>
-              </div>
+                Are you sure to logout?
             </div>
             <div class="modal-footer">
-              <button type="submit" class="btn btn-primary">Reset Password</button>
+                <button class="btn btn-dark lift" type="button" data-dismiss="modal">Cancel</button>
+                <a class="btn btn-custom lift" href="login.html">Logout</a>
             </div>
-          </div>
-        </form>
-      </div>
+        </div>
     </div>
+</div>
 
-    <script>
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" role="dialog" aria-labelledby="forgotPasswordLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form id="forgotPasswordForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="forgotPasswordLabel">Forgot Password</h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="fpRegNo">Register Number</label>
+            <input type="text" class="form-control" id="fpRegNo" name="r_no" required>
+          </div>
+          <div class="form-group">
+            <label for="fpPhone">Phone Number</label>
+            <input type="text" class="form-control" id="fpPhone" name="p_no" required>
+          </div>
+          <div class="form-group">
+            <label for="fpEmail">College Mail ID</label>
+            <input type="email" class="form-control" id="fpEmail" name="w_mail" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Reset Password</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+    // Sidebar toggle for small screens
+    $('#sidebarToggle').on('click', function() {
+        $('.sidebar-hc').toggleClass('show');
+        $('#sidebarOverlayHC').toggleClass('show', $('.sidebar-hc').hasClass('show'));
+        if ($('.sidebar-hc').hasClass('show')) {
+            $('body').css('overflow', 'hidden');
+        } else {
+            $('body').css('overflow', '');
+        }
+    });
+    // Hide sidebar when clicking overlay
+    $('#sidebarOverlayHC').on('click', function() {
+        $('.sidebar-hc').removeClass('show');
+        $(this).removeClass('show');
+        $('body').css('overflow', '');
+    });
+
+    // Forgot Password AJAX
     $('#forgotPasswordForm').submit(function(e) {
       e.preventDefault();
       $.ajax({
@@ -475,11 +439,7 @@
         }
       });
     });
-    </script>
-
-    <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
-    <script src="jquery.easing.min.js"></script>
-    <script src="main.js"></script>
+</script>
 </body>
 
 </html>
