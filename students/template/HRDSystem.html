@@ -493,6 +493,57 @@
         </div>
     </div>
 
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" role="dialog" aria-labelledby="forgotPasswordLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <form id="forgotPasswordForm">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="forgotPasswordLabel">Forgot Password</h5>
+              <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="fpRegNo">Register Number</label>
+                <input type="text" class="form-control" id="fpRegNo" name="r_no" required>
+              </div>
+              <div class="form-group">
+                <label for="fpPhone">Phone Number</label>
+                <input type="text" class="form-control" id="fpPhone" name="p_no" required>
+              </div>
+              <div class="form-group">
+                <label for="fpEmail">College Mail ID</label>
+                <input type="email" class="form-control" id="fpEmail" name="w_mail" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Reset Password</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+    $('#forgotPasswordForm').submit(function(e) {
+      e.preventDefault();
+      $.ajax({
+        url: 'forgot_password.php',
+        method: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+          alert(response);
+          $('#forgotPasswordModal').modal('hide');
+        },
+        error: function() {
+          alert('Error processing request.');
+        }
+      });
+    });
+    </script>
+
     <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
     <script src="../../resources/js/vendor/jquery.easing.min.js"></script>
     <script src="../../resources/js/vendor/main.js"></script>
