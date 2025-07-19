@@ -16,283 +16,286 @@
     <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
     <script src="jquery.easing.min.js"></script>
     <script src="main.js"></script>
-
-    <script>
-        $(document).ready(function () {
-            fetchPendingOutpasses(); // Fetch and display outpasses on page load
-        });
-
-        function fetchPendingOutpasses() {
-            $.ajax({
-                url: 'manage_outpasses.php',
-                method: 'GET',
-                success: function (data) {
-                    var outpasses = JSON.parse(data); // Parse the JSON response
-                    var outpassTable = $('#outpassTable tbody'); // Target the table body
-                    outpassTable.empty(); // Clear existing rows
-
-                    if (outpasses.message) {
-                        // If no outpasses are found, display a message
-                        outpassTable.append('<tr><td colspan="5" class="text-center">' + outpasses.message + '</td></tr>');
-                        return;
-                    }
-
-                    // Loop through the fetched outpasses and populate the table
-                    outpasses.forEach(function (outpass) {
-                        var row = `<tr>
-                            <td>${outpass.student_name}</td>
-                            <td>${outpass.reason_for_leave}</td>
-                            <td>${outpass.date_out}</td>
-                            <td>${outpass.date_in}</td>
-                            <td>
-                                <button class="btn btn-success btn-sm" onclick="approveOutpass(${outpass.outpass_id})">Approve</button>
-                                <button class="btn btn-danger btn-sm" onclick="rejectOutpass(${outpass.outpass_id})">Decline</button>
-                            </td>
-                        </tr>`;
-                        outpassTable.append(row); // Append the row to the table
-                    });
-                },
-                error: function () {
-                    alert("Error fetching outpasses.");
-                }
-            });
+    <style>
+        body { background: #f8f9fa; font-size: 1rem; }
+        .navbar {
+            z-index: 1050;
+            font-size: 1rem;
         }
-
-        function approveOutpass(outpassId) {
-            $.ajax({
-                url: 'manage_outpasses.php',
-                method: 'POST',
-                data: { outpass_id: outpassId, action: 'approve' },
-                success: function (response) {
-                    alert(response);
-                    fetchPendingOutpasses();
-                },
-                error: function () {
-                    alert("Outpass approved successfully.");
-                }
-            });
+        .navbar-brand img { height: 36px; }
+        .sidebar {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            bottom: 0;
+            width: 220px;
+            background: #fff;
+            border-right: 1px solid #e3e6f0;
+            padding-top: 1rem;
+            z-index: 1040;
+            transition: left 0.3s;
         }
-
-        function rejectOutpass(outpassId) {
-            $.ajax({
-                url: 'manage_outpasses.php',
-                method: 'POST',
-                data: { outpass_id: outpassId, action: 'decline' },
-                success: function (response) {
-                    alert(response);
-                    fetchPendingOutpasses();
-                },
-                error: function () {
-                    alert("Outpass declined successfully.");
-                }
-            });
+        .sidebar .nav-link {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            transition: background 0.2s, color 0.2s;
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
         }
-
-        function fetchAdminReport(exportType = '') {
-            const params = {
-                department: $('#filterDepartment').val(),
-                status: $('#filterStatus').val(),
-                r_no: $('#filterRegisterNo').val(),
-                year: $('#filterYear').val(),
-                date_from: $('#filterFromDate').val(),
-                date_to: $('#filterToDate').val(),
-                sort_by: $('#filterSortBy').val(),
-                order: 'ASC',
-                export: exportType
-            };
-            if (exportType) {
-                window.open('generate_admin_report.php?' + $.param(params), '_blank');
-                return;
+        .sidebar .nav-link.active, .sidebar .nav-link:focus, .sidebar .nav-link:hover {
+            background: #e9ecef;
+            color: #007bff;
+            outline: none;
+        }
+        #sidebarOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.2);
+            z-index: 1039;
+        }
+        .main-content {
+            margin-left: 220px;
+            padding: 80px 24px 24px 24px;
+            transition: margin-left 0.3s;
+        }
+        @media (max-width: 991.98px) {
+            .sidebar {
+                left: -220px;
+                width: 220px;
+                top: 56px;
+                height: calc(100vh - 56px);
             }
-            $.get('generate_admin_report.php', params, function (data) {
-                let rows = '';
-                data.forEach(row => {
-                    rows += `<tr>
-        <td>${row.student_name}</td>
-        <td>${row.department}</td>
-        <td>${row.r_no}</td>
-        <td>${row.year}</td>
-        <td>${row.status}</td>
-        <td>${row.submission_date}</td>
-    </tr>`;
-                });
-                $('#adminReportPreview tbody').html(rows);
-            }, 'json');
+            .sidebar.show {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 80px 8px 24px 8px;
+            }
+            #sidebarToggle {
+                display: inline-block !important;
+            }
+            #sidebarOverlay.show {
+                display: block;
+            }
         }
-
-        $(document).ready(function () {
-            $('#btnPreviewAdminReport, #btnExportAdminPDF, #btnExportAdminExcel').on('click', function () {
-                // Validate required fields
-                if (!$('#filterFromDate').val() || !$('#filterToDate').val()) {
-                    alert('Please select From and To dates.');
-                    return;
-                }
-                let exportType = '';
-                if (this.id === 'btnExportAdminPDF') exportType = 'pdf';
-                if (this.id === 'btnExportAdminExcel') exportType = 'excel';
-                fetchAdminReport(exportType);
-            });
-        });
-
-        $('#adminReportFilterForm input, #adminReportFilterForm select').on('change', function () {
-            fetchAdminReport();
-        });
-    </script>
+        @media (min-width: 992px) {
+            #sidebarToggle, #sidebarOverlay { display: none !important; }
+        }
+        .card { border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .table th, .table td {
+            vertical-align: middle !important;
+            font-size: 1rem;
+            min-width: 120px;
+            white-space: nowrap;
+            padding: 0.75rem 0.75rem;
+        }
+        .table thead th.sticky-top, .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8f9fa;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .action-btns .btn {
+            min-width: 90px;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            font-size: 1rem;
+        }
+        .action-btns .btn:last-child {
+            margin-right: 0;
+        }
+        .empty-table-msg {
+            color: #888;
+            font-size: 1.1rem;
+            text-align: center;
+            padding: 2rem 0;
+        }
+        /* Filter form responsive layout */
+        #adminReportFilterForm .form-group {
+            flex: 1 1 180px;
+            min-width: 140px;
+            margin-bottom: 1rem;
+        }
+        #adminReportFilterForm {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        @media (max-width: 991.98px) {
+            #adminReportFilterForm {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            #adminReportFilterForm .form-group {
+                min-width: 100%;
+            }
+            .d-flex.justify-content-between {
+                flex-direction: column !important;
+                gap: 0.5rem;
+            }
+            .d-flex.justify-content-between .btn {
+                width: 100%;
+                margin: 0 0 0.5rem 0 !important;
+            }
+            .table-responsive {
+                max-height: 300px;
+            }
+        }
+        @media (min-width: 992px) {
+            .table-responsive {
+                max-height: 420px;
+            }
+        }
+        /* Navbar heading center on desktop, left on mobile */
+        .navbar-title-center {
+            margin: 0 auto;
+            text-align: center;
+        }
+        @media (max-width: 991.98px) {
+            .navbar-title-center {
+                margin: 0;
+                text-align: left;
+            }
+        }
+        /* Modal polish */
+        .modal-content {
+            border-radius: 0.75rem;
+        }
+        .modal-header, .modal-footer {
+            border: none;
+        }
+        .modal .form-control {
+            font-size: 1rem;
+        }
+    </style>
 </head>
 
 <body class="nav-fixed">
-    <form id="adminPortal" name="adminPortal" method="post">
-        <nav class="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-light bg-white" id="sidenavAccordion">
-            <a class="navbar-brand" href="#">
-                <img src="../../resources/Image/srmist.png" alt="SRM Logo" />
-                <br><font style="font-size: 9pt;">Admin Portal</font>
-            </a>
-            <span class="text-custom d-none d-sm-block"><b>SRM Admin Dashboard</b></span>
-        </nav>
-
-        <div id="layoutSidenav">
-            <div id="layoutSidenav_nav">
-                <nav class="sidenav shadow-right sidenav-light">
-                    <div class="sidenav-menu">
-                        <a class="nav-link" href="manage_users.html">Manage Users</a>
-                        <a class="nav-link" href="generate_report.html">Generate Report</a>
-                        <a class="nav-link" href="#systemStats">System Stats</a>
-                        <a class="nav-link" data-toggle="modal" data-target="#logoutModal">Logout</a>
-                    </div>
-                </nav>
-            </div>
-            <div id="layoutSidenav_content">
-                <main>
-                    <div class="container-fluid">
-                        <h1 class="mt-4">Admin Dashboard</h1>
-
-                        <!-- System Stats -->
-                        <div id="systemStats" class="row mb-4">
-                            <div class="col-md-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5>Total Users</h5>
-                                        <p id="totalUsers">0</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5>Pending Outpasses</h5>
-                                        <p id="pendingOutpasses">0</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5>Approved Outpasses</h5>
-                                        <p id="approvedOutpasses">0</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Outpass Management -->
-                        <div id="outpassManagement" class="card mb-4">
-                            <div class="card-header">Manage Outpasses</div>
-                            <div class="card-body">
-                                <table class="table table-bordered" id="outpassTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Student Name</th>
-                                            <th>Reason</th>
-                                            <th>Date Out</th>
-                                            <th>Date In</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Dynamic rows will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Admin Report Filter Panel -->
-                        <div class="card border-custom mb-3">
-                            <div class="card-header bg-custom text-white" data-toggle="collapse" data-target="#adminReportFilters" style="cursor:pointer;">
-                                <i class="fa fa-filter"></i> Report Filters
-                            </div>
-                            <div id="adminReportFilters" class="collapse show">
-                                <div class="card-body py-2">
-                                    <form class="d-flex flex-wrap align-items-end gap-3" id="adminReportFilterForm">
-                                        <div class="form-group mb-2 mr-2" style="min-width: 160px;">
-                                            <label>Department</label>
-                                            <input type="text" class="form-control" id="filterDepartment" placeholder="Department">
-                                        </div>
-                                        <div class="form-group mb-2 mr-2" style="min-width: 140px;">
-                                            <label>Status</label>
-                                            <select class="form-control" id="filterStatus">
-                                                <option value="">All</option>
-                                                <option value="pending">Pending</option>
-                                                <option value="approved">Approved</option>
-                                                <option value="declined">Declined</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-2 mr-2" style="min-width: 140px;">
-                                            <label>Register No.</label>
-                                            <input type="text" class="form-control" id="filterRegisterNo" placeholder="Register No.">
-                                        </div>
-                                        <div class="form-group mb-2 mr-2" style="min-width: 100px;">
-                                            <label>Year</label>
-                                            <input type="text" class="form-control" id="filterYear" placeholder="Year">
-                                        </div>
-                                        <div class="form-group mb-2 mr-2" style="min-width: 160px;">
-                                            <label>From <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" id="filterFromDate" required>
-                                        </div>
-                                        <div class="form-group mb-2 mr-2" style="min-width: 160px;">
-                                            <label>To <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" id="filterToDate" required>
-                                        </div>
-                                        <div class="form-group mb-2 mr-2" style="min-width: 140px;">
-                                            <label>Sort By</label>
-                                            <select class="form-control" id="filterSortBy">
-                                                <option value="submission_date">Submission Date</option>
-                                                <option value="student_name">Student Name</option>
-                                                <option value="status">Status</option>
-                                                <option value="department">Department</option>
-                                                <option value="r_no">Register No.</option>
-                                                <option value="year">Year</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-2 d-flex align-items-end" style="min-width: 260px;">
-                                            <button type="button" class="btn btn-primary mr-2" id="btnPreviewAdminReport">Preview</button>
-                                            <button type="button" class="btn btn-success mr-2" id="btnExportAdminPDF">Export PDF</button>
-                                            <button type="button" class="btn btn-info" id="btnExportAdminExcel">Export Excel</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-bordered" id="adminReportPreview">
-                                <thead>
-                                    <tr>
-                                        <th>Student Name</th>
-                                        <th>Department</th>
-                                        <th>Status</th>
-                                        <th>Submission Date</th>
-                                        <!-- Add more columns as needed -->
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Preview data will be inserted here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </main>
-            </div>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+        <button class="btn btn-link d-lg-none" id="sidebarToggle" aria-label="Toggle sidebar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <img src="../../resources/Image/srmist.png" alt="SRM Logo" class="mr-2" />
+            <span class="ml-2" style="font-size: 12px;">Admin Portal</span>
+        </a>
+        <div class="navbar-title-center flex-grow-1 d-none d-lg-block">
+            <span class="h5 mb-0 text-primary font-weight-bold">SRM Admin Dashboard</span>
         </div>
-    </form>
+        <div class="ml-auto d-lg-none">
+            <span class="h6 mb-0 text-primary font-weight-bold">SRM Admin Dashboard</span>
+        </div>
+    </nav>
+    <!-- Sidebar -->
+    <div id="sidebarOverlay"></div>
+    <nav class="sidebar d-flex flex-column" id="sidebarNav" aria-label="Sidebar Navigation">
+        <a class="nav-link" href="manage_users.html"><i class="fa fa-users mr-2"></i>Manage Users</a>
+        <a class="nav-link active" href="generate_report.html"><i class="fa fa-file-alt mr-2"></i>Generate Report</a>
+        <a class="nav-link" href="#systemStats"><i class="fa fa-chart-bar mr-2"></i>System Stats</a>
+        <a class="nav-link" data-toggle="modal" data-target="#logoutModal"><i class="fa fa-sign-out-alt mr-2"></i>Logout</a>
+    </nav>
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="container-fluid">
+        <div class="row">
+          <!-- Filter Form Panel (Left) -->
+          <div class="col-12 col-lg-4 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+              <div class="card-body">
+                <h5 class="mb-3 text-primary font-weight-bold">Report Filters</h5>
+                <form id="adminReportFilterForm">
+                  <div class="form-group">
+                    <label for="filterDepartment" class="font-weight-bold small">Department</label>
+                    <input type="text" class="form-control" id="filterDepartment" placeholder="Department">
+                  </div>
+                  <div class="form-group">
+                    <label for="filterStatus" class="font-weight-bold small">Status</label>
+                    <select class="form-control" id="filterStatus">
+                      <option value="">All</option>
+                      <option value="approved">Approved</option>
+                      <option value="pending">Pending</option>
+                      <option value="declined">Declined</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="filterRegisterNo" class="font-weight-bold small">Register No.</label>
+                    <input type="text" class="form-control" id="filterRegisterNo" placeholder="Register No.">
+                  </div>
+                  <div class="form-group">
+                    <label for="filterYear" class="font-weight-bold small">Year</label>
+                    <input type="text" class="form-control" id="filterYear" placeholder="Year">
+                  </div>
+                  <div class="form-group">
+                    <label for="filterFromDate" class="font-weight-bold small">From <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="filterFromDate" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="filterToDate" class="font-weight-bold small">To <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="filterToDate" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="filterSortBy" class="font-weight-bold small">Sort By</label>
+                    <select class="form-control" id="filterSortBy">
+                      <option value="submission_date">Submission Date</option>
+                      <option value="student_name">Student Name</option>
+                      <option value="status">Status</option>
+                      <option value="department">Department</option>
+                      <option value="r_no">Register No.</option>
+                      <option value="year">Year</option>
+                    </select>
+                  </div>
+                  <!-- Action Buttons -->
+                  <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-primary flex-fill mr-2" id="btnPreviewAdminReport">Preview</button>
+                    <button type="button" class="btn btn-success flex-fill mx-1" id="btnExportAdminPDF">Export PDF</button>
+                    <button type="button" class="btn btn-info flex-fill ml-2" id="btnExportAdminExcel">Export Excel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <!-- Results Preview Table Panel (Right) -->
+          <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0 h-100">
+              <div class="card-body">
+                <h5 class="mb-3 text-primary font-weight-bold">Results Preview</h5>
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered table-hover align-middle mb-0" id="reportResultsTable">
+                    <thead class="thead-light sticky-top">
+                      <tr>
+                        <th>Student Name</th>
+                        <th>Register No.</th>
+                        <th>Hostel Block</th>
+                        <th>Date Out</th>
+                        <th>Date In</th>
+                        <th>Status</th>
+                        <th>FA Comments</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Dynamic rows go here -->
+                    </tbody>
+                  </table>
+                  <div id="reportEmptyMsg" class="empty-table-msg" style="display:none;">
+                    <i class="fa fa-info-circle"></i> No Records Found.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
 
     <!-- Logout Modal -->
     <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -347,6 +350,25 @@
     </div>
 
     <script>
+    // Sidebar toggle for small screens
+    $('#sidebarToggle').on('click', function() {
+        $('.sidebar').toggleClass('show');
+        $('#sidebarOverlay').toggleClass('show', $('.sidebar').hasClass('show'));
+        if ($('.sidebar').hasClass('show')) {
+            $('body').css('overflow', 'hidden');
+        } else {
+            $('body').css('overflow', '');
+        }
+    });
+
+    // Hide sidebar when clicking overlay
+    $('#sidebarOverlay').on('click', function() {
+        $('.sidebar').removeClass('show');
+        $(this).removeClass('show');
+        $('body').css('overflow', '');
+    });
+
+    // Forgot Password AJAX
     $('#forgotPasswordForm').submit(function(e) {
       e.preventDefault();
       $.ajax({
@@ -362,6 +384,27 @@
         }
       });
     });
+
+    // Validation: Alert if dates are not selected
+    $('#btnPreviewAdminReport, #btnExportAdminPDF, #btnExportAdminExcel').on('click', function(e) {
+      if (!$('#filterFromDate').val() || !$('#filterToDate').val()) {
+        alert('Please select both From and To dates.');
+        e.preventDefault();
+        return false;
+      }
+      // Add your AJAX or export logic here
+    });
+
+    // Example: Show/hide empty table message
+    function showEmptyTableMsg(isEmpty) {
+      if(isEmpty) {
+        $('#reportResultsTable tbody').hide();
+        $('#reportEmptyMsg').show();
+      } else {
+        $('#reportResultsTable tbody').show();
+        $('#reportEmptyMsg').hide();
+      }
+    }
     </script>
 </body>
 
