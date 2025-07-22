@@ -18,6 +18,12 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+    <style>
+        /* Change Password Modal styling */
+        #changePasswordModal .form-group { margin-bottom: 1rem; }
+        #changePasswordModal .invalid-feedback { display: block; }
+    </style>
+
     <script>
         function updateDateTime() {
             var now = new Date();
@@ -271,6 +277,57 @@
                 addressInputGroup.style.display = 'none'; // Hide the address input group
             }
         }
+
+        // Show modal on button click
+        $('#changePasswordBtn').on('click', function() {
+            $('#changePasswordForm')[0].reset();
+            $('#changePasswordStep1').removeClass('d-none');
+            $('#changePasswordStep2').addClass('d-none');
+            $('#currentPasswordError').text('');
+            $('#newPasswordError').text('');
+            $('#changePasswordModal').modal('show');
+        });
+
+        // Step 1: Validate current password
+        $('#changePasswordForm').off('submit').on('submit', function(e) {
+            e.preventDefault();
+            if ($('#changePasswordStep1').is(':visible')) {
+                // AJAX validate current password
+                $.post('validate_password.php', { current_password: $('#currentPassword').val() }, function(resp) {
+                    if (resp.valid) {
+                        $('#changePasswordStep1').addClass('d-none');
+                        $('#changePasswordStep2').removeClass('d-none');
+                        $('#currentPasswordError').text('');
+                    } else {
+                        $('#currentPasswordError').text('Incorrect current password.');
+                    }
+                }, 'json').fail(function() {
+                    $('#currentPasswordError').text('Server error. Try again.');
+                });
+            } else {
+                // Step 2: Validate and update new password
+                var newPass = $('#newPassword').val();
+                var confirmPass = $('#confirmPassword').val();
+                if (newPass.length < 6) {
+                    $('#newPasswordError').text('Password must be at least 6 characters.');
+                    return;
+                }
+                if (newPass !== confirmPass) {
+                    $('#newPasswordError').text('Passwords do not match.');
+                    return;
+                }
+                $.post('change_password.php', { new_password: newPass }, function(resp) {
+                    if (resp.success) {
+                        $('#changePasswordModal').modal('hide');
+                        alert('Password changed successfully.');
+                    } else {
+                        $('#newPasswordError').text(resp.error || 'Failed to change password.');
+                    }
+                }, 'json').fail(function() {
+                    $('#newPasswordError').text('Server error. Try again.');
+                });
+            }
+        });
     </script>
 </head>
 
@@ -285,6 +342,12 @@
             <span class="text-custom d-none d-sm-block"><b>Faculty of Engineering and Technology, Ramapuram, Chennai</b></span>
 
             <ul class="navbar-nav align-items-center ml-auto text-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="changePasswordBtn" style="cursor:pointer;">
+                        <div class="nav-link-icon"><i class="fas fa-key"></i></div>
+                        Change Password
+                    </a>
+                </li>
                 <a style='cursor:pointer;'>
                     <span class="dropdown-item" data-toggle="modal" data-target="#logoutModal">
                         <div class="dropdown-item-icon"><i class="fas fa-sign-out-alt"></i></div>
@@ -491,6 +554,40 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <form id="changePasswordForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" id="changePasswordStep1">
+            <div class="form-group">
+              <label for="currentPassword">Current Password</label>
+              <input type="password" class="form-control" id="currentPassword" required autocomplete="current-password">
+              <div class="invalid-feedback" id="currentPasswordError"></div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Next</button>
+          </div>
+          <div class="modal-body d-none" id="changePasswordStep2">
+            <div class="form-group">
+              <label for="newPassword">New Password</label>
+              <input type="password" class="form-control" id="newPassword" required autocomplete="new-password">
+            </div>
+            <div class="form-group">
+              <label for="confirmPassword">Confirm New Password</label>
+              <input type="password" class="form-control" id="confirmPassword" required autocomplete="new-password">
+              <div class="invalid-feedback" id="newPasswordError"></div>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Change Password</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script src="../../resources/js/vendor/bootstrap.bundle.min.js"></script>
