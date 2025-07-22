@@ -105,8 +105,10 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        Please enter your email address to reset your password.
-                        <input type="email" class="form-control" id="email" name="email" required>
+                        Please enter your details to reset your password.
+                        <input type="text" class="form-control mb-2" id="fp_r_no" placeholder="Register Number" required>
+                        <input type="text" class="form-control mb-2" id="fp_p_no" placeholder="Phone Number" required>
+                        <input type="email" class="form-control" id="fp_email" placeholder="College Email" required>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
@@ -182,6 +184,20 @@
                 });
             }, false);
         })();
+
+        $('#btnResetPassword').on('click', function () {
+            var r_no = $('#fp_r_no').val().trim();
+            var p_no = $('#fp_p_no').val().trim();
+            var email = $('#fp_email').val().trim();
+            if (!r_no || !p_no || !email) {
+                alert('Please fill all fields.');
+                return;
+            }
+            $.post('forgot_password.php', { r_no: r_no, p_no: p_no, email: email }, function (response) {
+                alert(response);
+                $('#modalForgetPassword').modal('hide');
+            });
+        });
     </script>
 </body>
 </html>
