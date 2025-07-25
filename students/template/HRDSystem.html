@@ -11,11 +11,9 @@
     <link href="customstyle.css" rel="stylesheet">
     <link href="../../resources/css/bootstrap.min.css" rel="stylesheet">
     <link href='../../resources/Image/college_icon.jpeg' type='Image/x-icon' rel='icon'>
-    <script src="jquery.min.js"></script>
-    <script src="bootstrap.bundle.min.js"></script>
-    <script src="jquery.easing.min.js"></script>
-    <script src="main.js"></script>
+    <!-- Use only one jQuery and one Bootstrap JS import -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
@@ -46,6 +44,67 @@
 
         $(document).ready(function () {
             checkOutpassStatus();
+
+            // Change Password Modal Logic
+            $('#changePasswordBtn').on('click', function(e) {
+                e.preventDefault();
+                $('#changePasswordForm')[0].reset();
+                $('#changePasswordStep1').removeClass('d-none');
+                $('#changePasswordStep2').addClass('d-none');
+                $('#currentPasswordError').text('');
+                $('#newPasswordError').text('');
+                // Only require currentPassword for step 1
+                $('#currentPassword').attr('required', true);
+                $('#newPassword, #confirmPassword').removeAttr('required');
+                $('#changePasswordModal').modal('show');
+            });
+
+            $('#changePasswordForm').off('submit').on('submit', function(e) {
+                e.preventDefault();
+                if ($('#changePasswordStep1').is(':visible')) {
+                    // Only require currentPassword for step 1
+                    $('#currentPassword').attr('required', true);
+                    $('#newPassword, #confirmPassword').removeAttr('required');
+                    $.post('validate_password.php', { current_password: $('#currentPassword').val() }, function(resp) {
+                        if (resp.valid) {
+                            $('#changePasswordStep1').addClass('d-none');
+                            $('#changePasswordStep2').removeClass('d-none');
+                            $('#currentPasswordError').text('');
+                            // Only require newPassword/confirmPassword for step 2
+                            $('#currentPassword').removeAttr('required');
+                            $('#newPassword, #confirmPassword').attr('required', true);
+                        } else {
+                            $('#currentPasswordError').text('Incorrect current password.');
+                        }
+                    }, 'json').fail(function() {
+                        $('#currentPasswordError').text('Server error. Try again.');
+                    });
+                } else {
+                    // Only require newPassword/confirmPassword for step 2
+                    $('#currentPassword').removeAttr('required');
+                    $('#newPassword, #confirmPassword').attr('required', true);
+                    var newPass = $('#newPassword').val();
+                    var confirmPass = $('#confirmPassword').val();
+                    if (newPass.length < 6) {
+                        $('#newPasswordError').text('Password must be at least 6 characters.');
+                        return;
+                    }
+                    if (newPass !== confirmPass) {
+                        $('#newPasswordError').text('Passwords do not match.');
+                        return;
+                    }
+                    $.post('validate_password.php', { new_password: newPass }, function(resp) {
+                        if (resp.success) {
+                            $('#changePasswordModal').modal('hide');
+                            alert('Password changed successfully.');
+                        } else {
+                            $('#newPasswordError').text(resp.error || 'Failed to change password.');
+                        }
+                    }, 'json').fail(function() {
+                        $('#newPasswordError').text('Server error. Try again.');
+                    });
+                }
+            });
         });
 
         function checkOutpassStatus() {
@@ -57,7 +116,7 @@
                     fetchStudentDetails();
                     if (outpass) {
                         var now = new Date();
-                        var dateIn = new Date(outpass.date_in + 'T' + outpass.time_in);  // Combine date and time
+                        var dateIn = new Date(outpass.date_in + 'T' + outpass.time_in);
                         var dateOut = new Date(outpass.date_out + 'T' + outpass.time_out);
                         if (outpass.status === 'Denied' || (outpass.status === 'Approved' && dateIn < now)) {
                             $('#outpassForm').show();
@@ -66,7 +125,7 @@
                             $('#outpassForm').hide();
                             $('#outpassStatus').show();
                             $('#outpassStatusText').text('Outpass Status: Approved');
-                            $('#generateQRButton').show(); // Show the QR button
+                            $('#generateQRButton').show();
                             $('#generateQRButton').off('click').on('click', function() {
                                 generateQRCode(outpass);
                             });
@@ -98,13 +157,11 @@
 
         function fetchStudentDetails() {
             $.ajax({
-                url: 'fetch_student_details.php', // URL to fetch student details
+                url: 'fetch_student_details.php',
                 method: 'GET',
                 success: function (data) {
                     var student = JSON.parse(data);
-                    
                     if (student) {
-                        // Populate student details
                         $('#studentName').text(student.name);
                         $('#registerNo').text(student.r_no);
                         $('#emailId').text(student.email);
@@ -138,7 +195,6 @@
         }
 
         function generateQRCode(outpass) {
-            // Create an array of key-value pairs in the desired order
             var qrDataArray = [
                 ["NAME", outpass.name],
                 ["REGISTER NO", outpass.r_no],
@@ -149,7 +205,6 @@
                 ["REASON", outpass.reason_for_leave]
             ];
 
-            // Function to format the date
             function formatDate(dateString) {
                 var date = new Date(dateString);
                 var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -159,13 +214,9 @@
                 return day + " " + month + " " + year;
             }
 
-            // Convert the array to an object
             var qrData = Object.fromEntries(qrDataArray);
-
-            // Clear any existing QR code
             $('#qrcode').empty();
 
-            // Generate the QR code with the formatted JSON data
             var qrcode = new QRCode(document.getElementById("qrcode"), {
                 text: JSON.stringify(qrData, null, 3),
                 width: 256,
@@ -173,7 +224,6 @@
                 correctLevel: QRCode.CorrectLevel.H
             });
 
-            // Add logo to the QR code after a short delay to ensure the QR code is rendered
             setTimeout(function() {
                 var qrCanvas = document.querySelector('#qrcode canvas');
                 if (!qrCanvas) {
@@ -184,35 +234,27 @@
                 var canvas = document.createElement('canvas');
                 var context = canvas.getContext('2d');
                 var logo = new Image();
-                logo.src = 'srm.png'; // Path to your logo image
+                logo.src = 'srm.png';
 
                 logo.onload = function() {
                     canvas.width = qrCanvas.width;
                     canvas.height = qrCanvas.height;
-
-                    // Draw the QR code onto the new canvas
                     context.drawImage(qrCanvas, 0, 0, canvas.width, canvas.height);
-
-                    // Scale and draw the logo in the center of the QR code
-                    var logoSize = canvas.width / 2; // Resize logo to 20% of the QR code width
+                    var logoSize = canvas.width / 2;
                     var logoX = (canvas.width - logoSize) / 2;
                     var logoY = (canvas.height - logoSize) / 2;
-
                     context.drawImage(logo, logoX, logoY, logoSize, logoSize);
-
-                    // Append the final canvas to the QR code container
                     $('#qrcode').empty().append(canvas);
                 };
 
                 logo.onerror = function() {
                     console.error("Error loading logo image.");
                 };
-            }, 500); // Delay to ensure QR code is rendered
+            }, 500);
         }
 
         function submitOutpassForm(event) {
-            event.preventDefault(); // Prevent the default form submission
-
+            event.preventDefault();
             if (!validateOutpassForm()) {
                 return;
             }
@@ -226,8 +268,8 @@
                 toDate: $('#toDate').val(),
                 toTime: $('#toTime').val(),
                 reason: $('#reason').val(),
-                addressType: addressType, // Include the addressType field
-                address: address // Include the address field
+                addressType: addressType,
+                address: address
             };
 
             $.ajax({
@@ -257,14 +299,13 @@
             var addressInput = document.getElementById('address');
 
             if (addressType === 'home') {
-                // Fetch home address from the database
                 $.ajax({
-                    url: 'fetch_home_address.php', // URL to fetch home address
+                    url: 'fetch_home_address.php',
                     method: 'GET',
                     success: function (data) {
                         var homeAddress = JSON.parse(data).address;
                         addressInput.value = homeAddress;
-                        addressInputGroup.style.display = 'none'; // Hide the address input group
+                        addressInputGroup.style.display = 'none';
                     },
                     error: function (xhr, status, error) {
                         console.error("Error fetching home address:", error);
@@ -272,62 +313,11 @@
                 });
             } else if (addressType === 'other') {
                 addressInput.value = '';
-                addressInputGroup.style.display = 'block'; // Show the address input group
+                addressInputGroup.style.display = 'block';
             } else {
-                addressInputGroup.style.display = 'none'; // Hide the address input group
+                addressInputGroup.style.display = 'none';
             }
         }
-
-        // Show modal on button click
-        $('#changePasswordBtn').on('click', function() {
-            $('#changePasswordForm')[0].reset();
-            $('#changePasswordStep1').removeClass('d-none');
-            $('#changePasswordStep2').addClass('d-none');
-            $('#currentPasswordError').text('');
-            $('#newPasswordError').text('');
-            $('#changePasswordModal').modal('show');
-        });
-
-        // Step 1: Validate current password
-        $('#changePasswordForm').off('submit').on('submit', function(e) {
-            e.preventDefault();
-            if ($('#changePasswordStep1').is(':visible')) {
-                // AJAX validate current password
-                $.post('validate_password.php', { current_password: $('#currentPassword').val() }, function(resp) {
-                    if (resp.valid) {
-                        $('#changePasswordStep1').addClass('d-none');
-                        $('#changePasswordStep2').removeClass('d-none');
-                        $('#currentPasswordError').text('');
-                    } else {
-                        $('#currentPasswordError').text('Incorrect current password.');
-                    }
-                }, 'json').fail(function() {
-                    $('#currentPasswordError').text('Server error. Try again.');
-                });
-            } else {
-                // Step 2: Validate and update new password
-                var newPass = $('#newPassword').val();
-                var confirmPass = $('#confirmPassword').val();
-                if (newPass.length < 6) {
-                    $('#newPasswordError').text('Password must be at least 6 characters.');
-                    return;
-                }
-                if (newPass !== confirmPass) {
-                    $('#newPasswordError').text('Passwords do not match.');
-                    return;
-                }
-                $.post('change_password.php', { new_password: newPass }, function(resp) {
-                    if (resp.success) {
-                        $('#changePasswordModal').modal('hide');
-                        alert('Password changed successfully.');
-                    } else {
-                        $('#newPasswordError').text(resp.error || 'Failed to change password.');
-                    }
-                }, 'json').fail(function() {
-                    $('#newPasswordError').text('Server error. Try again.');
-                });
-            }
-        });
     </script>
 </head>
 
@@ -489,7 +479,6 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- Outpass form content -->
                     <div id="outpassStatus" style="display: none;">
                         <p id="outpassStatusText"></p>
                         <button id="generateQRButton" class="btn btn-primary" style="display: none;">Generate QR Code</button>
@@ -569,7 +558,7 @@
           <div class="modal-body" id="changePasswordStep1">
             <div class="form-group">
               <label for="currentPassword">Current Password</label>
-              <input type="password" class="form-control" id="currentPassword" required autocomplete="current-password">
+              <input type="password" class="form-control" id="currentPassword" name="currentPassword" required autocomplete="current-password">
               <div class="invalid-feedback" id="currentPasswordError"></div>
             </div>
             <button type="submit" class="btn btn-primary w-100">Next</button>
@@ -577,11 +566,11 @@
           <div class="modal-body d-none" id="changePasswordStep2">
             <div class="form-group">
               <label for="newPassword">New Password</label>
-              <input type="password" class="form-control" id="newPassword" required autocomplete="new-password">
+              <input type="password" class="form-control" id="newPassword" name="newPassword" required autocomplete="new-password">
             </div>
             <div class="form-group">
               <label for="confirmPassword">Confirm New Password</label>
-              <input type="password" class="form-control" id="confirmPassword" required autocomplete="new-password">
+              <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
               <div class="invalid-feedback" id="newPasswordError"></div>
             </div>
             <button type="submit" class="btn btn-success w-100">Change Password</button>
