@@ -80,7 +80,8 @@ if (isset($_FILES['excelFile']) && $_FILES['excelFile']['error'] === UPLOAD_ERR_
         }
 
         // 1. Insert into users table
-        $default_password = password_hash('changeme', PASSWORD_DEFAULT);
+        $password_plain = $r_no . substr($p_no, -4); // r_no + last 4 digits of p_no
+        $default_password = password_hash($password_plain, PASSWORD_DEFAULT);
         $stmt = $conn->prepare("INSERT INTO users (username, password, user_type) VALUES (?, ?, 'student')");
         $stmt->bind_param("ss", $email, $default_password);
         if (!$stmt->execute()) {
