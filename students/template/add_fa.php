@@ -25,7 +25,7 @@ $stmt2->fetch();
 $stmt2->close();
 
 if (!$exists) {
-    $default_password = password_hash('changeme', PASSWORD_DEFAULT);
+    $default_password = password_hash($email, PASSWORD_DEFAULT); // Use email as initial password
     $stmt3 = $conn->prepare("INSERT INTO users (username, password, user_type) VALUES (?, ?, 'fa')");
     $stmt3->bind_param("ss", $email, $default_password);
     $stmt3->execute();
