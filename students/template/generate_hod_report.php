@@ -38,7 +38,9 @@ $sql = "SELECT
             o.date_out AS submitted_date,
             o.status,
             f.name AS fa_name,
-            o.reason_for_leave AS reason
+            o.reason_for_leave AS reason,
+            s.r_no,
+            o.date_in
         FROM outpass o
         JOIN student s ON o.s_id = s.id
         JOIN fa f ON s.fa_id = f.id
@@ -140,3 +142,31 @@ if ($export === 'excel') {
 
 header('Content-Type: application/json');
 echo json_encode($rows);
+?>
+<script>
+// Assuming jQuery is available
+$(document).ready(function() {
+    // Fetch and display the report
+    fetchHODReport();
+
+    function fetchHODReport() {
+        $.get('path_to_your_php_file.php', function(data) {
+            let rows = '';
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(row => {
+                    rows += `<tr>
+                        <td>${row.student_name}</td>
+                        <td>${row.fa_name}</td>
+                        <td>${row.r_no || ''}</td>
+                        <td>${row.date_in || ''}</td>
+                        <td>${row.date_out || ''}</td>
+                    </tr>`;
+                });
+            } else {
+                rows = '<tr><td colspan="5" class="text-center">No records found.</td></tr>';
+            }
+            $('#hodReportPreview tbody').html(rows);
+        }, 'json');
+    }
+});
+</script>

@@ -138,3 +138,22 @@ if ($export === 'excel') {
 // Default: return JSON for preview
 header('Content-Type: application/json');
 echo json_encode($rows);
+?>
+<script>
+// ...inside fetchFAReport's $.get() callback...
+if (Array.isArray(data) && data.length > 0) {
+    data.forEach(row => {
+        rows += `<tr>
+            <td>${row.student_name}</td>
+            <td>${row.date_in || ''}</td>
+            <td>${row.date_out || ''}</td>
+            <td>${row.r_no || ''}</td>
+            <td>${row.status}</td>
+            <td>${row.fa_comment || ''}</td>
+        </tr>`;
+    });
+} else {
+    rows = '<tr><td colspan="6" class="text-center">No records found.</td></tr>';
+}
+$('#faReportPreview tbody').html(rows);
+</script>
