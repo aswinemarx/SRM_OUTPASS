@@ -138,3 +138,22 @@ if ($export === 'excel') {
 // Default: return JSON for preview
 header('Content-Type: application/json');
 echo json_encode($rows);
+?>
+<script>
+// ...inside fetchAdminReport's $.get() callback...
+let rows = '';
+if (Array.isArray(data) && data.length > 0) {
+    data.forEach(row => {
+        rows += `<tr>
+            <td>${row.student_name}</td>
+            <td>${row.department}</td>
+            <td>${row.r_no || ''}</td>
+            <td>${row.date_in || ''}</td>
+            <td>${row.date_out || ''}</td>
+        </tr>`;
+    });
+} else {
+    rows = '<tr><td colspan="5" class="text-center">No records found.</td></tr>';
+}
+$('#adminReportPreview tbody').html(rows);
+</script>
