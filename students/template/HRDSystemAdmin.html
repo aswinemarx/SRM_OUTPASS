@@ -111,22 +111,30 @@
                 order: 'ASC',
                 export: exportType
             };
+
             if (exportType) {
                 window.open('generate_admin_report.php?' + $.param(params), '_blank');
                 return;
             }
+
             $.get('generate_admin_report.php', params, function (data) {
                 let rows = '';
-                data.forEach(row => {
-                    rows += `<tr>
-        <td>${row.student_name}</td>
-        <td>${row.department}</td>
-        <td>${row.r_no}</td>
-        <td>${row.year}</td>
-        <td>${row.status}</td>
-        <td>${row.submission_date}</td>
-    </tr>`;
-                });
+
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(row => {
+                        rows += `<tr>
+                            <td>${row.student_name || ''}</td>
+                            <td>${row.department || ''}</td>
+                            <td>${row.r_no || ''}</td>
+                            <td>${row.year || ''}</td>
+                            <td>${row.status || ''}</td>
+                            <td>${row.submission_date || ''}</td>
+                        </tr>`;
+                    });
+                } else {
+                    rows = `<tr><td colspan="6" class="text-center">No records found</td></tr>`;
+                }
+
                 $('#adminReportPreview tbody').html(rows);
             }, 'json');
         }
