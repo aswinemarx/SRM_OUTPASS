@@ -66,7 +66,7 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Export PDF using TCPDF
+// PDF Export using TCPDF
 if ($export === 'pdf') {
     $pdf = new \TCPDF();
     $pdf->SetCreator(PDF_CREATOR);
@@ -81,18 +81,29 @@ if ($export === 'pdf') {
     $pdf->AddPage();
     $pdf->SetFont('helvetica', '', 10);
 
-    // Build HTML table
+    // Table headers
+    $headers = [
+        'Student Name', 'Department', 'Reg No', 'Year', 'Status', 'Submission Date'
+    ];
     $html = '<h2>Outpass Report</h2><table border="1" cellpadding="4"><tr>';
-    foreach(array_keys($rows[0]) as $header) {
-        $html .= '<th>' . ucwords(str_replace('_',' ',$header)) . '</th>';
+    foreach ($headers as $h) {
+        $html .= '<th>' . $h . '</th>';
     }
     $html .= '</tr>';
-    foreach($rows as $row) {
-        $html .= '<tr>';
-        foreach($row as $cell) {
-            $html .= '<td>' . htmlspecialchars($cell ?? '') . '</td>';
+
+    if (count($rows) > 0) {
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+            $html .= '<td>' . htmlspecialchars($row['student_name']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['department']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['r_no']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['year']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['status']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['submission_date']) . '</td>';
+            $html .= '</tr>';
         }
-        $html .= '</tr>';
+    } else {
+        $html .= '<tr><td colspan="6" align="center">No records found</td></tr>';
     }
     $html .= '</table>';
 
@@ -101,28 +112,30 @@ if ($export === 'pdf') {
     exit;
 }
 
-// Export Excel using PhpSpreadsheet
+// Excel Export using PhpSpreadsheet
 if ($export === 'excel') {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
     // Header
+    $headers = ['Student Name', 'Department', 'Reg No', 'Year', 'Status', 'Submission Date'];
     $col = 1;
-    foreach(array_keys($rows[0]) as $header) {
+    foreach ($headers as $header) {
         $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '1';
-        $sheet->setCellValue($cell, ucwords(str_replace('_',' ',$header)));
+        $sheet->setCellValue($cell, $header);
         $col++;
     }
 
     // Data
     $rowNum = 2;
-    foreach($rows as $row) {
+    foreach ($rows as $row) {
         $col = 1;
-        foreach($row as $cellValue) {
-            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $rowNum;
-            $sheet->setCellValue($cell, $cellValue);
-            $col++;
-        }
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['student_name']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['department']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['r_no']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['year']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['status']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['submission_date']);
         $rowNum++;
     }
 
@@ -140,20 +153,35 @@ header('Content-Type: application/json');
 echo json_encode($rows);
 ?>
 <script>
-// ...inside fetchAdminReport's $.get() callback...
-let rows = '';
-if (Array.isArray(data) && data.length > 0) {
-    data.forEach(row => {
-        rows += `<tr>
-            <td>${row.student_name}</td>
-            <td>${row.department}</td>
-            <td>${row.r_no || ''}</td>
-            <td>${row.date_in || ''}</td>
-            <td>${row.date_out || ''}</td>
-        </tr>`;
-    });
-} else {
-    rows = '<tr><td colspan="5" class="text-center">No records found.</td></tr>';
+// Example jQuery function for frontend table rendering
+function fetchAdminReport() {
+    const params = {
+        department: $('#filterDepartment').val(),
+        status: $('#filterStatus').val(),
+        r_no: $('#filterRegNo').val(),
+        year: $('#filterYear').val(),
+        date_from: $('#filterFromDate').val(),
+        date_to: $('#filterToDate').val(),
+        sort_by: $('#filterSortBy').val(),
+        order: $('#filterOrder').val()
+    };
+    $.get('generate_admin_report.php', params, function(data) {
+        let rows = '';
+        if (Array.isArray(data) && data.length > 0) {
+            data.forEach(row => {
+                rows += `<tr>
+                    <td>${row.student_name || ''}</td>
+                    <td>${row.department || ''}</td>
+                    <td>${row.r_no || ''}</td>
+                    <td>${row.year || ''}</td>
+                    <td>${row.status || ''}</td>
+                    <td>${row.submission_date || ''}</td>
+                </tr>`;
+            });
+        } else {
+            rows = '<tr><td colspan="6" class="text-center">No records found.</td></tr>';
+        }
+        $('#adminReportPreview tbody').html(rows);
+    }, 'json');
 }
-$('#adminReportPreview tbody').html(rows);
 </script>
