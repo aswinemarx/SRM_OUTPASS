@@ -31,17 +31,20 @@ $allowed_sort = [
 if (!in_array($sort_by, $allowed_sort)) $sort_by = 'submission_time';
 $order = $order === 'DESC' ? 'DESC' : 'ASC';
 
-// Build SQL
+// Build SQL (add date_in, date_out, r_no fields)
 $sql = "SELECT 
             s.name AS student_name,
+            o.date_in,
+            o.date_out,
+            s.r_no,
             o.status,
-            o.comment AS fa_comment,
-            CONCAT(o.date_out, ' ', o.time_out) AS submission_time
+            o.comment AS fa_comment
         FROM outpass o
         JOIN student s ON o.s_id = s.id
         WHERE s.fa_id = ?";
 $params = [$fa_id];
 
+// Filters
 if ($student_name) {
     $sql .= " AND s.name LIKE ?";
     $params[] = "%$student_name%";
@@ -81,23 +84,38 @@ if ($export === 'pdf') {
     $pdf->AddPage();
     $pdf->SetFont('helvetica', '', 10);
 
-    // Build HTML table
-    $html = '<h2>Outpass Report</h2><table border="1" cellpadding="4"><tr>';
-    foreach(array_keys($rows[0]) as $header) {
-        $html .= '<th>' . ucwords(str_replace('_',' ',$header)) . '</th>';
+    // Table headers in required order and human-readable
+    $headers = [
+        'student_name' => 'Student Name',
+        'date_in'      => 'Date In',
+        'date_out'     => 'Date Out',
+        'r_no'         => 'Reg No',
+        'status'       => 'Status',
+        'fa_comment'   => 'FA Comment'
+    ];
+
+    $html = '<h2>Outpass Report</h2>';
+    $html .= '<table border="1" cellpadding="4"><tr>';
+    foreach ($headers as $h) {
+        $html .= '<th>' . $h . '</th>';
     }
     $html .= '</tr>';
-    foreach($rows as $row) {
-        $html .= '<tr>';
-        foreach($row as $cell) {
-            $html .= '<td>' . htmlspecialchars($cell ?? '') . '</td>';
+
+    if (count($rows) > 0) {
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+            foreach (array_keys($headers) as $key) {
+                $html .= '<td>' . htmlspecialchars($row[$key] ?? '') . '</td>';
+            }
+            $html .= '</tr>';
         }
-        $html .= '</tr>';
+    } else {
+        $html .= '<tr><td colspan="' . count($headers) . '" align="center">No records found</td></tr>';
     }
     $html .= '</table>';
 
     $pdf->writeHTML($html, true, false, true, false, '');
-    $pdf->Output('report.pdf', 'D');
+    $pdf->Output('outpass_report.pdf', 'D');
     exit;
 }
 
