@@ -1,6 +1,6 @@
 <?php
 require_once 'db.php';
-require 'vendor/autoload.php'; // For PhpSpreadsheet
+require_once 'vendor/autoload.php'; // For PhpSpreadsheet and TCPDF
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -13,7 +13,7 @@ if (!$hod_id) {
     exit;
 }
 
-// Filters (no default values for debugging/testing)
+// Filters
 $status = $_GET['status'] ?? '';
 $fa_name = $_GET['fa_name'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
@@ -35,12 +35,12 @@ if ($sort_by === 'reason') $sort_column = 'reason_for_leave';
 // Build SQL
 $sql = "SELECT 
             s.name AS student_name,
-            o.date_out AS submitted_date,
-            o.status,
             f.name AS fa_name,
-            o.reason_for_leave AS reason,
             s.r_no,
-            o.date_in
+            o.date_in,
+            o.date_out,
+            o.status,
+            o.reason_for_leave AS reason
         FROM outpass o
         JOIN student s ON o.s_id = s.id
         JOIN fa f ON s.fa_id = f.id
@@ -72,9 +72,8 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Export logic (optional)
-if ($export === 'pdf') {// Adjust path if needed
-
+// Export to PDF
+if ($export === 'pdf') {
     $pdf = new \TCPDF();
     $pdf->SetCreator(PDF_CREATOR);
     $pdf->SetAuthor('SRM HOD Portal');
@@ -88,51 +87,68 @@ if ($export === 'pdf') {// Adjust path if needed
     $pdf->AddPage();
     $pdf->SetFont('helvetica', '', 10);
 
-    // Build HTML table
+    // Table headers
+    $headers = [
+        'Student Name', 'FA Name', 'Reg No', 'Date In', 'Date Out', 'Status', 'Reason'
+    ];
     $html = '<h2>Outpass Report</h2><table border="1" cellpadding="4"><tr>';
-    foreach(array_keys($rows[0]) as $header) {
-        $html .= '<th>' . ucwords(str_replace('_',' ',$header)) . '</th>';
+    foreach ($headers as $h) {
+        $html .= '<th>' . $h . '</th>';
     }
     $html .= '</tr>';
-    foreach($rows as $row) {
-        $html .= '<tr>';
-        foreach($row as $cell) {
-            $html .= '<td>' . htmlspecialchars($cell) . '</td>';
+
+    if (count($rows) > 0) {
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+            $html .= '<td>' . htmlspecialchars($row['student_name']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['fa_name']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['r_no']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['date_in']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['date_out']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['status']) . '</td>';
+            $html .= '<td>' . htmlspecialchars($row['reason']) . '</td>';
+            $html .= '</tr>';
         }
-        $html .= '</tr>';
+    } else {
+        $html .= '<tr><td colspan="7" align="center">No records found</td></tr>';
     }
     $html .= '</table>';
 
     $pdf->writeHTML($html, true, false, true, false, '');
-    $pdf->Output('report.pdf', 'D');
+    $pdf->Output('outpass_report.pdf', 'D');
     exit;
 }
+
+// Export to Excel
 if ($export === 'excel') {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
     // Header
+    $headers = ['Student Name', 'FA Name', 'Reg No', 'Date In', 'Date Out', 'Status', 'Reason'];
     $col = 1;
-    foreach(array_keys($rows[0]) as $header) {
+    foreach ($headers as $header) {
         $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '1';
-        $sheet->setCellValue($cell, ucwords(str_replace('_',' ',$header)));
+        $sheet->setCellValue($cell, $header);
         $col++;
     }
 
     // Data
     $rowNum = 2;
-    foreach($rows as $row) {
+    foreach ($rows as $row) {
         $col = 1;
-        foreach($row as $cellValue) {
-            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $rowNum;
-            $sheet->setCellValue($cell, $cellValue);
-            $col++;
-        }
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['student_name']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['fa_name']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['r_no']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['date_in']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['date_out']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['status']);
+        $sheet->setCellValueByColumnAndRow($col++, $rowNum, $row['reason']);
         $rowNum++;
     }
 
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="report.xlsx"');
+    header('Content-Disposition: attachment;filename="outpass_report.xlsx"');
     header('Cache-Control: max-age=0');
 
     $writer = new Xlsx($spreadsheet);
@@ -140,6 +156,7 @@ if ($export === 'excel') {
     exit;
 }
 
+// Default: return JSON for preview
 header('Content-Type: application/json');
 echo json_encode($rows);
 ?>
@@ -149,8 +166,22 @@ $(document).ready(function() {
     // Fetch and display the report
     fetchHODReport();
 
-    function fetchHODReport() {
-        $.get('path_to_your_php_file.php', function(data) {
+    function fetchHODReport(exportType = '') {
+        const params = {
+            hod_id: $('#user_id').val(),
+            status: $('#filterStatus').val(),
+            fa_name: $('#filterFAName').val(),
+            date_from: $('#filterFromDate').val(),
+            date_to: $('#filterToDate').val(),
+            sort_by: $('#filterSortBy').val(),
+            order: 'ASC',
+            export: exportType
+        };
+        if (exportType) {
+            window.open('generate_hod_report.php?' + $.param(params), '_blank');
+            return;
+        }
+        $.get('generate_hod_report.php', params, function(data) {
             let rows = '';
             if (Array.isArray(data) && data.length > 0) {
                 data.forEach(row => {
@@ -168,5 +199,13 @@ $(document).ready(function() {
             $('#hodReportPreview tbody').html(rows);
         }, 'json');
     }
+
+    // Example: Bind to filter/search/export buttons
+    $('#btnPreviewHODReport, #btnExportHODPDF, #btnExportHODExcel').on('click', function() {
+        let exportType = '';
+        if (this.id === 'btnExportHODPDF') exportType = 'pdf';
+        if (this.id === 'btnExportHODExcel') exportType = 'excel';
+        fetchHODReport(exportType);
+    });
 });
 </script>
