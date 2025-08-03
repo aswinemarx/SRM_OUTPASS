@@ -154,18 +154,23 @@ echo json_encode($rows);
 ?>
 <script>
 // Example jQuery function for frontend table rendering
-function fetchAdminReport() {
+function fetchAdminReport(exportType = '') {
     const params = {
         department: $('#filterDepartment').val(),
         status: $('#filterStatus').val(),
-        r_no: $('#filterRegNo').val(),
+        r_no: $('#filterRegisterNo').val(),
         year: $('#filterYear').val(),
         date_from: $('#filterFromDate').val(),
         date_to: $('#filterToDate').val(),
         sort_by: $('#filterSortBy').val(),
-        order: $('#filterOrder').val()
+        order: 'ASC',
+        export: exportType
     };
-    $.get('generate_admin_report.php', params, function(data) {
+    if (exportType) {
+        window.open('generate_admin_report.php?' + $.param(params), '_blank');
+        return;
+    }
+    $.get('generate_admin_report.php', params, function (data) {
         let rows = '';
         if (Array.isArray(data) && data.length > 0) {
             data.forEach(row => {
@@ -179,9 +184,20 @@ function fetchAdminReport() {
                 </tr>`;
             });
         } else {
-            rows = '<tr><td colspan="6" class="text-center">No records found.</td></tr>';
+            rows = '<tr><td colspan="6" class="text-center">No records found</td></tr>';
         }
         $('#adminReportPreview tbody').html(rows);
     }, 'json');
 }
+
+$('#btnPreviewAdminReport, #btnExportAdminPDF, #btnExportAdminExcel').on('click', function () {
+    if (!$('#filterFromDate').val() || !$('#filterToDate').val()) {
+        alert('Please select From and To dates.');
+        return;
+    }
+    let exportType = '';
+    if (this.id === 'btnExportAdminPDF') exportType = 'pdf';
+    if (this.id === 'btnExportAdminExcel') exportType = 'excel';
+    fetchAdminReport(exportType);
+});
 </script>
