@@ -107,7 +107,6 @@
                 year: $('#filterYear').val(),
                 date_from: $('#filterFromDate').val(),
                 date_to: $('#filterToDate').val(),
-                sort_by: $('#filterSortBy').val(),
                 order: 'ASC',
                 export: exportType
             };
@@ -140,7 +139,7 @@
         }
 
         $(document).ready(function () {
-            $('#btnPreviewAdminReport, #btnExportAdminPDF, #btnExportAdminExcel').on('click', function () {
+            $('#btnPreviewAdminReport, #btnExportAdminPDF').on('click', function () {
                 // Validate required fields
                 if (!$('#filterFromDate').val() || !$('#filterToDate').val()) {
                     alert('Please select From and To dates.');
@@ -148,7 +147,6 @@
                 }
                 let exportType = '';
                 if (this.id === 'btnExportAdminPDF') exportType = 'pdf';
-                if (this.id === 'btnExportAdminExcel') exportType = 'excel';
                 fetchAdminReport(exportType);
             });
         });
@@ -305,7 +303,6 @@
                             <div id="adminReportFilters" class="collapse show">
                                 <div class="card-body py-2">
                                     <form class="form-row align-items-end" id="adminReportFilterForm">
-                                        
                                         <div class="form-group col-md-2">
                                             <label>Department</label>
                                             <input type="text" class="form-control" id="filterDepartment" placeholder="Department">
@@ -336,20 +333,8 @@
                                             <input type="date" class="form-control" id="filterToDate" required>
                                         </div>
                                         <div class="form-group col-md-2">
-                                            <label>Sort By</label>
-                                            <select class="form-control" id="filterSortBy">
-                                                <option value="submission_date">Submission Date</option>
-                                                <option value="student_name">Student Name</option>
-                                                <option value="status">Status</option>
-                                                <option value="department">Department</option>
-                                                <option value="r_no">Register No.</option>
-                                                <option value="year">Year</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-md-2">
                                             <button type="button" class="btn btn-primary" id="btnPreviewAdminReport">Preview</button>
                                             <button type="button" class="btn btn-success" id="btnExportAdminPDF">Export PDF</button>
-                                            <button type="button" class="btn btn-info" id="btnExportAdminExcel">Export Excel</button>
                                         </div>
                                     </form>
                                 </div>

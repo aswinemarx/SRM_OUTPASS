@@ -114,40 +114,6 @@ if ($export === 'pdf') {
     exit;
 }
 
-// Export Excel using PhpSpreadsheet
-if ($export === 'excel') {
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-
-    // Header
-    $col = 1;
-    foreach(array_keys($rows[0]) as $header) {
-        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . '1';
-        $sheet->setCellValue($cell, ucwords(str_replace('_',' ',$header)));
-        $col++;
-    }
-
-    // Data
-    $rowNum = 2;
-    foreach($rows as $row) {
-        $col = 1;
-        foreach($row as $cellValue) {
-            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $rowNum;
-            $sheet->setCellValue($cell, $cellValue);
-            $col++;
-        }
-        $rowNum++;
-    }
-
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="report.xlsx"');
-    header('Cache-Control: max-age=0');
-
-    $writer = new Xlsx($spreadsheet);
-    $writer->save('php://output');
-    exit;
-}
-
 // Default: return JSON for preview
 header('Content-Type: application/json');
 echo json_encode($rows);
