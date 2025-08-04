@@ -193,30 +193,29 @@
                 fa_name: $('#filterFAName').val(),
                 date_from: $('#filterFromDate').val(),
                 date_to: $('#filterToDate').val(),
-                sort_by: $('#filterSortBy').val(),
                 order: 'ASC',
                 export: exportType
             };
-            console.log("Fetching report with params:", params); // Add this line
             if (exportType) {
                 window.open('generate_hod_report.php?' + $.param(params), '_blank');
                 return;
             }
             $.get('generate_hod_report.php', params, function(data) {
-                console.log("Report data:", data); // Add this line
                 let rows = '';
                 if (Array.isArray(data) && data.length > 0) {
                     data.forEach(row => {
                         rows += `<tr>
-                            <td>${row.student_name}</td>
-                            <td>${row.submitted_date}</td>
-                            <td>${row.status}</td>
-                            <td>${row.fa_name}</td>
-                            <td>${row.reason}</td>
+                            <td>${row.student_name || ''}</td>
+                            <td>${row.fa_name || ''}</td>
+                            <td>${row.r_no || ''}</td>
+                            <td>${row.date_in || ''}</td>
+                            <td>${row.date_out || ''}</td>
+                            <td>${row.status || ''}</td>
+                            <td>${row.reason || ''}</td>
                         </tr>`;
                     });
                 } else {
-                    rows = '<tr><td colspan="5" class="text-center">No records found.</td></tr>';
+                    rows = '<tr><td colspan="7" class="text-center">No records found.</td></tr>';
                 }
                 $('#hodReportPreview tbody').html(rows);
             }, 'json');
@@ -409,15 +408,6 @@
                                                 <input type="date" class="form-control" id="filterToDate" required>
                                             </div>
                                             <div class="form-group col-md-2">
-                                                <label>Sort By</label>
-                                                <select class="form-control" id="filterSortBy">
-                                                    <option value="submitted_date">Submitted Date</option>
-                                                    <option value="student_name">Student Name</option>
-                                                    <option value="status">Status</option>
-                                                    <option value="reason">Reason</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-2">
                                                 <button type="button" class="btn btn-primary" id="btnPreviewHODReport">Preview</button>
                                                 <button type="button" class="btn btn-success" id="btnExportHODPDF">Export PDF</button>
                                                 <button type="button" class="btn btn-info" id="btnExportHODExcel">Export Excel</button>
@@ -428,21 +418,16 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Student Name</th>
-                                                        <th>Faculty Advisor</th>
+                                                        <th>FA Name</th>
                                                         <th>Reg No</th>
                                                         <th>Date In</th>
                                                         <th>Date Out</th>
+                                                        <th>Status</th>
+                                                        <th>Reason</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <!-- Example row with sample values -->
-                                                    <tr>
-                                                        <td>Sample Student</td>
-                                                        <td>Dr. A. Kumar</td>
-                                                        <td>RA20210001</td>
-                                                        <td>2024-07-10</td>
-                                                        <td>2024-07-05</td>
-                                                    </tr>
+                                                    
                                                 </tbody>
                                             </table>
                                         </div>

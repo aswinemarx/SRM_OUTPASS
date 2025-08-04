@@ -18,19 +18,12 @@ $status = $_GET['status'] ?? '';
 $fa_name = $_GET['fa_name'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
-$sort_by = $_GET['sort_by'] ?? 'date_out';
 $order = strtoupper($_GET['order'] ?? 'ASC');
 $export = $_GET['export'] ?? '';
 
-// Validate sort_by
-$allowed_sort = ['student_name', 'submitted_date', 'date_out', 'status', 'reason', 'reason_for_leave'];
-if (!in_array($sort_by, $allowed_sort)) $sort_by = 'date_out';
+// Default sort column and order
+$sort_column = 'date_out';
 $order = $order === 'DESC' ? 'DESC' : 'ASC';
-
-// Map 'submitted_date' to 'date_out' and 'reason' to 'reason_for_leave'
-$sort_column = $sort_by;
-if ($sort_by === 'submitted_date') $sort_column = 'date_out';
-if ($sort_by === 'reason') $sort_column = 'reason_for_leave';
 
 // Build SQL
 $sql = "SELECT 
@@ -160,52 +153,3 @@ if ($export === 'excel') {
 header('Content-Type: application/json');
 echo json_encode($rows);
 ?>
-<script>
-// Assuming jQuery is available
-$(document).ready(function() {
-    // Fetch and display the report
-    fetchHODReport();
-
-    function fetchHODReport(exportType = '') {
-        const params = {
-            hod_id: $('#user_id').val(),
-            status: $('#filterStatus').val(),
-            fa_name: $('#filterFAName').val(),
-            date_from: $('#filterFromDate').val(),
-            date_to: $('#filterToDate').val(),
-            sort_by: $('#filterSortBy').val(),
-            order: 'ASC',
-            export: exportType
-        };
-        if (exportType) {
-            window.open('generate_hod_report.php?' + $.param(params), '_blank');
-            return;
-        }
-        $.get('generate_hod_report.php', params, function(data) {
-            let rows = '';
-            if (Array.isArray(data) && data.length > 0) {
-                data.forEach(row => {
-                    rows += `<tr>
-                        <td>${row.student_name}</td>
-                        <td>${row.fa_name}</td>
-                        <td>${row.r_no || ''}</td>
-                        <td>${row.date_in || ''}</td>
-                        <td>${row.date_out || ''}</td>
-                    </tr>`;
-                });
-            } else {
-                rows = '<tr><td colspan="5" class="text-center">No records found.</td></tr>';
-            }
-            $('#hodReportPreview tbody').html(rows);
-        }, 'json');
-    }
-
-    // Example: Bind to filter/search/export buttons
-    $('#btnPreviewHODReport, #btnExportHODPDF, #btnExportHODExcel').on('click', function() {
-        let exportType = '';
-        if (this.id === 'btnExportHODPDF') exportType = 'pdf';
-        if (this.id === 'btnExportHODExcel') exportType = 'excel';
-        fetchHODReport(exportType);
-    });
-});
-</script>

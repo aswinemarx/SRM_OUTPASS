@@ -20,16 +20,11 @@ $student_name = $_GET['student_name'] ?? '';
 $status = $_GET['status'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
-$sort_by = $_GET['sort_by'] ?? 'submission_time';
-$order = strtoupper($_GET['order'] ?? 'ASC');
 $export = $_GET['export'] ?? '';
 
-// Allowed sort columns (only those still present)
-$allowed_sort = [
-    'student_name', 'status', 'fa_comment', 'submission_time'
-];
-if (!in_array($sort_by, $allowed_sort)) $sort_by = 'submission_time';
-$order = $order === 'DESC' ? 'DESC' : 'ASC';
+// Default: sort by date_out ascending
+$sort_by = 'date_out';
+$order = 'ASC';
 
 // Build SQL (add date_in, date_out, r_no fields)
 $sql = "SELECT 
@@ -157,21 +152,3 @@ if ($export === 'excel') {
 header('Content-Type: application/json');
 echo json_encode($rows);
 ?>
-<script>
-// ...inside fetchFAReport's $.get() callback...
-if (Array.isArray(data) && data.length > 0) {
-    data.forEach(row => {
-        rows += `<tr>
-            <td>${row.student_name}</td>
-            <td>${row.date_in || ''}</td>
-            <td>${row.date_out || ''}</td>
-            <td>${row.r_no || ''}</td>
-            <td>${row.status}</td>
-            <td>${row.fa_comment || ''}</td>
-        </tr>`;
-    });
-} else {
-    rows = '<tr><td colspan="6" class="text-center">No records found.</td></tr>';
-}
-$('#faReportPreview tbody').html(rows);
-</script>

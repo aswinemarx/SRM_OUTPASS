@@ -224,55 +224,45 @@
             }
         }
 
-        function fetchFAReport(exportType = '') {
-            const params = {
-                fa_id: $('#fa_id').val(), // Make sure this input exists and is set
-                student_name: $('#filterStudentName').val(),
-                status: $('#filterStatus').val(),
-                date_from: $('#filterFromDate').val(),
-                date_to: $('#filterToDate').val(),
-                sort_by: $('#filterSortBy').val(),
-                order: 'ASC',
-                export: exportType
-            };
-            if (exportType) {
-                // Export as file
-                const url = 'generate_fa_report.php?' + $.param(params);
-                window.open(url, '_blank');
-                return;
-            }
-            // Preview in table
-            $.get('generate_fa_report.php', params, function(data) {
-                let rows = '';
-                if (Array.isArray(data) && data.length > 0) {
-                    data.forEach(row => {
-                        rows += `<tr>
-                            <td>${row.student_name}</td>
-                            <td>${row.submission_time || ''}</td>
-                            <td>${row.status}</td>
-                            <td>${row.fa_comment || ''}</td>
-                        </tr>`;
-                    });
-                } else {
-                    rows = '<tr><td colspan="4" class="text-center">No records found.</td></tr>';
-                }
-                $('#faReportPreview tbody').html(rows);
-            }, 'json');
-        }
-
         $(document).ready(function() {
-            $('#btnPreviewReport, #btnExportPDF, #btnExportExcel').on('click', function(e) {
+            $('#btnPreviewReport').on('click', function(e) {
+                e.preventDefault();
                 // Validate required fields
                 if (!$('#filterFromDate').val() || !$('#filterToDate').val()) {
                     alert('Please fill both required fields: From and To.');
                     return;
                 }
-                // Determine export type
-                let exportType = '';
-                if (this.id === 'btnExportPDF') exportType = 'pdf';
-                if (this.id === 'btnExportExcel') exportType = 'excel';
-                fetchFAReport(exportType);
+                fetchFAReport();
             });
+
+            function fetchFAReport() {
+                const params = {
+                    fa_id: $('#fa_id').val(),
+                    student_name: $('#filterStudentName').val(),
+                    status: $('#filterStatus').val(),
+                    date_from: $('#filterFromDate').val(),
+                    date_to: $('#filterToDate').val(),
+                    order: 'ASC'
+                };
+                $.get('generate_fa_report.php', params, function(data) {
+                    let rows = '';
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(row => {
+                            rows += `<tr>
+                                <td>${row.student_name || ''}</td>
+                                <td>${row.date_in || ''}</td>
+                                <td>${row.date_out || ''}</td>
+                                <td>${row.r_no || ''}</td>
+                                <td>${row.status || ''}</td>
+                                <td>${row.fa_comment || ''}</td>
+                            </tr>`;
+                        });
+                    } else {
+                        rows = '<tr><td colspan="6" class="text-center">No records found.</td></tr>';
+                    }
+                    $('#faReportPreview tbody').html(rows);
+                }, 'json');
+            }
         });
 
         // Optionally, trigger preview on filter change:
@@ -459,19 +449,6 @@
                                                 <input type="date" class="form-control" id="filterToDate" required>
                                             </div>
                                             <div class="form-group col-md-2">
-                                                <label>Sort By</label>
-                                                <select class="form-control" id="filterSortBy">
-                                                    <option value="submission_time">Submission Time</option>
-                                                    <option value="student_name">Student Name</option>
-                                                    <option value="status">Status</option>
-                                                    <option value="fa_comment">FA Comment</option>
-                                                    <option value="r_no">Register No.</option>
-                                                    <option value="date_out">Date (Out)</option>
-                                                    <option value="date_in">Date (In)</option>
-                                                    <option value="reason_for_leave">Reason</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-2">
                                                 <button type="button" class="btn btn-primary" id="btnPreviewReport">Preview</button>
                                                 <button type="button" class="btn btn-success" id="btnExportPDF">Export PDF</button>
                                                 <button type="button" class="btn btn-info" id="btnExportExcel">Export Excel</button>
@@ -491,14 +468,6 @@
                                                 </thead>
                                                 <tbody>
                                                     <!-- Example row with placeholders -->
-                                                    <tr>
-                                                        <td>Sample Student</td>
-                                                        <td>2024-07-01</td>
-                                                        <td>2024-06-30</td>
-                                                        <td>RA12345678</td>
-                                                        <td>Approved</td>
-                                                        <td>All clear</td>
-                                                    </tr>
                                                 </tbody>
                                             </table>
                                         </div>
