@@ -81,7 +81,7 @@ if ($outpass_result->num_rows > 0) {
         $mail->Host = 'smtp.gmail.com'; // Set the SMTP server to use
         $mail->SMTPAuth = true;
         $mail->Username = '11g13abinith@gmail.com'; // Your Gmail email address
-        $mail->Password = 'ewof lugy ksja ikbw'; // Your Gmail password (use app password if 2FA is enabled)
+        $mail->Password = ''; // Your Gmail password (use app password if 2FA is enabled)
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 

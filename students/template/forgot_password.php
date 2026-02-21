@@ -8,7 +8,7 @@ use PHPMailer\PHPMailer\Exception;
 require 'vendor/autoload.php'; // Use Composer autoload like approve_HOD.php
 
 $r_no = $_POST['r_no'] ?? '';
-$p_no = $_POST['p_no'] ?? '';
+$p_no = $_POST['s_no'] ?? '';
 $email = $_POST['email'] ?? '';
 
 if (!$r_no || !$p_no || !$email) {
@@ -18,7 +18,7 @@ if (!$r_no || !$p_no || !$email) {
 $conn = new mysqli($host, $username, $password, $dbname);
 if ($conn->connect_error) exit('DB connection failed.');
 
-$stmt = $conn->prepare("SELECT id FROM student WHERE r_no = ? AND p_no = ? AND email = ?");
+$stmt = $conn->prepare("SELECT id FROM student WHERE r_no = ? AND s_no = ? AND email = ?");
 $stmt->bind_param("sss", $r_no, $p_no, $email);
 $stmt->execute();
 $stmt->store_result();
